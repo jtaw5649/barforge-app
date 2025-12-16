@@ -126,6 +126,7 @@ impl ModuleService {
             has_preferences: false,
             installed_at: chrono::Utc::now(),
             registry_version: registry_module.version.clone(),
+            position: None,
         };
 
         self.installed.borrow_mut().insert(uuid_str, installed.clone());

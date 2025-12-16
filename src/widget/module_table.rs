@@ -12,22 +12,7 @@ use crate::theme::{
     AppTheme, FONT_SM, FONT_XS, ICON_XS, RADIUS_SM, SPACE_MD, SPACE_SM, SPACE_XS,
 };
 
-fn format_relative_time(dt: &chrono::DateTime<chrono::Utc>) -> String {
-    let now = chrono::Utc::now();
-    let duration = now.signed_duration_since(*dt);
-
-    if duration.num_days() > 365 {
-        format!("{}y ago", duration.num_days() / 365)
-    } else if duration.num_days() > 30 {
-        format!("{}mo ago", duration.num_days() / 30)
-    } else if duration.num_days() > 0 {
-        format!("{}d ago", duration.num_days())
-    } else if duration.num_hours() > 0 {
-        format!("{}h ago", duration.num_hours())
-    } else {
-        "Just now".to_string()
-    }
-}
+use super::format_relative_time;
 
 pub fn module_table<'a>(
     modules: &[&'a RegistryModule],

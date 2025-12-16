@@ -5,9 +5,7 @@ use std::time::{Duration, SystemTime};
 use thiserror::Error;
 
 use crate::domain::{ModuleCategory, RegistryIndex, RegistryModule};
-use crate::services::paths;
-
-const REGISTRY_URL: &str = "https://waybar-modules.github.io/registry/index.json";
+use crate::services::paths::{self, REGISTRY_URL};
 const CACHE_TTL: Duration = Duration::from_secs(3600);
 
 #[derive(Debug, Error)]

@@ -27,7 +27,8 @@ pub const FONT_SIZE_XXL: f32 = FONT_XL;
 
 pub const CARD_WIDTH: f32 = CARD_MIN_WIDTH;
 
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum ThemeMode {
     Light,
     Dark,

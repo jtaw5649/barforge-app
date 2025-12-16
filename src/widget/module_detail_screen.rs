@@ -13,26 +13,10 @@ use crate::theme::{
     SPACE_XS,
 };
 
-fn format_relative_time(date: &DateTime<Utc>) -> String {
-    let now = Utc::now();
-    let duration = now.signed_duration_since(*date);
+use super::category_style;
+use super::format_relative_time;
 
-    if duration.num_days() > 365 {
-        let years = duration.num_days() / 365;
-        format!("{} year{} ago", years, if years == 1 { "" } else { "s" })
-    } else if duration.num_days() > 30 {
-        let months = duration.num_days() / 30;
-        format!("{} month{} ago", months, if months == 1 { "" } else { "s" })
-    } else if duration.num_days() > 0 {
-        format!("{} day{} ago", duration.num_days(), if duration.num_days() == 1 { "" } else { "s" })
-    } else if duration.num_hours() > 0 {
-        format!("{} hour{} ago", duration.num_hours(), if duration.num_hours() == 1 { "" } else { "s" })
-    } else {
-        "Just now".to_string()
-    }
-}
-
-fn rating_stars<'a>(rating: f32, theme: &AppTheme) -> Element<'a, Message> {
+fn rating_stars_element<'a>(rating: f32, theme: &AppTheme) -> Element<'a, Message> {
     let full_stars = rating.floor() as usize;
     let has_half = rating - rating.floor() >= 0.5;
     let empty_stars = 5 - full_stars - if has_half { 1 } else { 0 };
@@ -65,8 +49,8 @@ pub fn module_detail_screen<'a>(
     waybar_version: Option<&str>,
 ) -> Element<'a, Message> {
     let theme_copy = *theme;
-    let badge_bg = module.category.badge_color();
-    let badge_text = module.category.badge_text_color();
+    let badge_bg = category_style::badge_color(module.category);
+    let badge_text = category_style::badge_text_color(module.category);
 
     let back_button = button(
         row![
@@ -135,7 +119,7 @@ pub fn module_detail_screen<'a>(
 
         if let Some(rating) = module.rating {
             stats_items.push(Space::new().width(SPACE_MD).into());
-            stats_items.push(rating_stars(rating, theme));
+            stats_items.push(rating_stars_element(rating, theme));
             stats_items.push(Space::new().width(SPACE_XS).into());
             stats_items.push(
                 text(format!("{:.1}", rating))

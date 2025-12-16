@@ -107,6 +107,7 @@ impl App {
                         uuid,
                         module.name.clone(),
                         module.version.clone(),
+                        module.repo_url.clone(),
                     );
                 }
 
@@ -121,6 +122,36 @@ impl App {
             Message::ToggleModule { uuid, enabled } => {
                 self.installed.toggling.insert(uuid.clone());
                 tasks::toggle_module(uuid, enabled)
+            }
+
+            Message::SetModulePosition { uuid, section } => {
+                tasks::change_module_position(uuid, section)
+            }
+
+            Message::PositionChanged(result) => {
+                match result {
+                    Ok(uuid) => {
+                        if let Some(module) = self.installed_modules.iter().find(|m| m.uuid.to_string() == uuid) {
+                            let section_name = module
+                                .position
+                                .as_ref()
+                                .map(|p| format!("{}", p.section))
+                                .unwrap_or_else(|| "center".to_string());
+                            self.push_notification(
+                                format!("Moved to {}", section_name),
+                                state::NotificationKind::Success,
+                            );
+                        }
+                        return tasks::load_installed();
+                    }
+                    Err(e) => {
+                        self.push_notification(
+                            format!("Failed to change position: {e}"),
+                            state::NotificationKind::Error,
+                        );
+                    }
+                }
+                Task::none()
             }
 
             Message::UninstallModule(uuid) => {
@@ -243,6 +274,112 @@ impl App {
                     }
                     Err(e) => {
                         self.push_notification(format!("Uninstall failed: {e}"), state::NotificationKind::Error);
+                    }
+                }
+                Task::none()
+            }
+
+            Message::UpdateModule(uuid) => {
+                if let Some(_installed) = self.installed_modules.iter().find(|m| m.uuid.to_string() == uuid)
+                    && let Some(registry) = &self.registry
+                    && let Some(registry_module) = registry.modules.iter().find(|m| m.uuid.to_string() == uuid)
+                    && let Some(new_version) = &registry_module.version
+                {
+                    self.installed.updating.insert(uuid.clone());
+                    return tasks::update_module(
+                        uuid,
+                        registry_module.repo_url.clone(),
+                        new_version.clone(),
+                    );
+                }
+                self.push_notification(
+                    "Cannot update: module not found".to_string(),
+                    state::NotificationKind::Error,
+                );
+                Task::none()
+            }
+
+            Message::UpdateAllModules => {
+                if self.installed.updating_all {
+                    return Task::none();
+                }
+
+                let updates: Vec<_> = self
+                    .installed_modules
+                    .iter()
+                    .filter_map(|installed| {
+                        let uuid = installed.uuid.to_string();
+                        self.registry.as_ref().and_then(|registry| {
+                            registry
+                                .modules
+                                .iter()
+                                .find(|m| m.uuid.to_string() == uuid)
+                                .and_then(|reg_mod| {
+                                    reg_mod.version.as_ref().and_then(|new_ver| {
+                                        if new_ver > &installed.version {
+                                            Some((uuid, reg_mod.repo_url.clone(), new_ver.clone()))
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                })
+                        })
+                    })
+                    .collect();
+
+                if updates.is_empty() {
+                    self.push_notification(
+                        "All modules are up to date".to_string(),
+                        state::NotificationKind::Info,
+                    );
+                    return Task::none();
+                }
+
+                self.installed.updating_all = true;
+                tasks::update_all_modules(updates)
+            }
+
+            Message::UpdateCompleted(result) => {
+                match result {
+                    Ok(updated_module) => {
+                        let uuid = updated_module.uuid.to_string();
+                        self.installed.updating.remove(&uuid);
+
+                        if let Some(existing) = self.installed_modules.iter_mut().find(|m| m.uuid.to_string() == uuid) {
+                            existing.version = updated_module.version;
+                            existing.registry_version = updated_module.registry_version;
+                        }
+
+                        self.push_notification(
+                            format!("Updated {}", updated_module.waybar_module_name),
+                            state::NotificationKind::Success,
+                        );
+                    }
+                    Err(e) => {
+                        self.push_notification(
+                            format!("Update failed: {e}"),
+                            state::NotificationKind::Error,
+                        );
+                    }
+                }
+                Task::none()
+            }
+
+            Message::UpdateAllCompleted(result) => {
+                self.installed.updating_all = false;
+                match result {
+                    Ok(count) => {
+                        self.push_notification(
+                            format!("Updated {} module{}", count, if count == 1 { "" } else { "s" }),
+                            state::NotificationKind::Success,
+                        );
+                        return tasks::load_installed();
+                    }
+                    Err(e) => {
+                        self.push_notification(
+                            format!("Batch update failed: {e}"),
+                            state::NotificationKind::Error,
+                        );
                     }
                 }
                 Task::none()
@@ -1058,19 +1195,95 @@ impl App {
     fn view_updates(&self) -> Element<'_, Message> {
         let updates = self.modules_with_updates();
         let update_count = updates.len();
+        let is_updating_all = self.installed.updating_all;
+
+        let update_all_btn = if update_count > 0 && !is_updating_all {
+            let primary = self.theme.primary;
+            let primary_hover = iced::Color {
+                r: (primary.r * 0.9).min(1.0),
+                g: (primary.g * 0.9).min(1.0),
+                b: (primary.b * 0.9).min(1.0),
+                a: primary.a,
+            };
+            button(
+                row![
+                    Icon::Updates.svg(14.0),
+                    text(format!("Update All ({})", update_count)).size(14.0),
+                ]
+                .spacing(SPACING_XS)
+                .align_y(Alignment::Center),
+            )
+            .padding([SPACING_SM, SPACING_MD])
+            .on_press(Message::UpdateAllModules)
+            .style(move |_theme, status| {
+                let bg = match status {
+                    button::Status::Hovered | button::Status::Pressed => primary_hover,
+                    _ => primary,
+                };
+                button::Style {
+                    background: Some(iced::Background::Color(bg)),
+                    text_color: iced::Color::WHITE,
+                    border: iced::Border {
+                        radius: crate::theme::RADIUS_MD.into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }
+            })
+        } else if is_updating_all {
+            let surface = self.theme.surface;
+            let text_muted = self.theme.text_muted;
+            button(
+                row![
+                    text(self.spinner_char()).size(14.0),
+                    text("Updating...").size(14.0),
+                ]
+                .spacing(SPACING_XS)
+                .align_y(Alignment::Center),
+            )
+            .padding([SPACING_SM, SPACING_MD])
+            .style(move |_theme, _status| button::Style {
+                background: Some(iced::Background::Color(surface)),
+                text_color: text_muted,
+                border: iced::Border {
+                    radius: crate::theme::RADIUS_MD.into(),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+        } else {
+            let surface = self.theme.surface;
+            let text_muted = self.theme.text_muted;
+            button(text("No Updates").size(14.0))
+                .padding([SPACING_SM, SPACING_MD])
+                .style(move |_theme, _status| button::Style {
+                    background: Some(iced::Background::Color(surface)),
+                    text_color: text_muted,
+                    border: iced::Border {
+                        radius: crate::theme::RADIUS_MD.into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                })
+        };
 
         let header = container(
-            column![
-                text("Updates").size(20).color(self.theme.text),
-                text(if update_count > 0 {
-                    format!("{} update{} available", update_count, if update_count == 1 { "" } else { "s" })
-                } else {
-                    "All modules are up to date".to_string()
-                })
-                .size(13)
-                .color(self.theme.text_secondary),
+            row![
+                column![
+                    text("Updates").size(20).color(self.theme.text),
+                    text(if update_count > 0 {
+                        format!("{} update{} available", update_count, if update_count == 1 { "" } else { "s" })
+                    } else {
+                        "All modules are up to date".to_string()
+                    })
+                    .size(13)
+                    .color(self.theme.text_secondary),
+                ]
+                .spacing(SPACING_SM / 2.0),
+                Space::new().width(Length::Fill),
+                update_all_btn,
             ]
-            .spacing(SPACING_SM / 2.0),
+            .align_y(Alignment::Center),
         )
         .padding([SPACING_MD, SPACING_LG]);
 
@@ -1085,10 +1298,65 @@ impl App {
             let rows: Vec<Element<Message>> = updates
                 .iter()
                 .map(|m| {
+                    let uuid = m.uuid.to_string();
                     let current_ver = m.version.to_string();
                     let new_ver = m.registry_version.as_ref().map(|v| v.to_string()).unwrap_or_default();
+                    let is_updating = self.installed.updating.contains(&uuid);
 
                     let theme = self.theme;
+                    let primary = theme.primary;
+                    let primary_hover = iced::Color {
+                        r: (primary.r * 0.9).min(1.0),
+                        g: (primary.g * 0.9).min(1.0),
+                        b: (primary.b * 0.9).min(1.0),
+                        a: primary.a,
+                    };
+
+                    let update_btn: Element<Message> = if is_updating {
+                        let surface = theme.surface;
+                        let text_muted = theme.text_muted;
+                        button(
+                            row![
+                                text(self.spinner_char()).size(12.0),
+                                text("Updating").size(12.0),
+                            ]
+                            .spacing(SPACING_XS)
+                            .align_y(Alignment::Center),
+                        )
+                        .padding([SPACING_XS, SPACING_SM])
+                        .style(move |_theme, _status| button::Style {
+                            background: Some(iced::Background::Color(surface)),
+                            text_color: text_muted,
+                            border: iced::Border {
+                                radius: crate::theme::RADIUS_SM.into(),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .into()
+                    } else {
+                        let uuid_clone = uuid.clone();
+                        button(text("Update").size(12.0))
+                            .padding([SPACING_XS, SPACING_SM])
+                            .on_press(Message::UpdateModule(uuid_clone))
+                            .style(move |_theme, status| {
+                                let bg = match status {
+                                    button::Status::Hovered | button::Status::Pressed => primary_hover,
+                                    _ => primary,
+                                };
+                                button::Style {
+                                    background: Some(iced::Background::Color(bg)),
+                                    text_color: iced::Color::WHITE,
+                                    border: iced::Border {
+                                        radius: crate::theme::RADIUS_SM.into(),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                }
+                            })
+                            .into()
+                    };
+
                     container(
                         row![
                             column![
@@ -1099,9 +1367,7 @@ impl App {
                             ]
                             .spacing(SPACING_SM / 2.0),
                             Space::new().width(Length::Fill),
-                            text("Update available")
-                                .size(12.0)
-                                .color(theme.warning),
+                            update_btn,
                         ]
                         .align_y(Alignment::Center)
                         .padding(SPACING_MD),

@@ -64,11 +64,13 @@ impl fmt::Display for CategoryFilter {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SortField {
     #[default]
     Name,
     Downloads,
+    #[serde(rename = "recentlyupdated")]
     RecentlyUpdated,
     Rating,
 }
@@ -90,7 +92,8 @@ impl fmt::Display for SortField {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SortOrder {
     Ascending,
     #[default]
@@ -106,7 +109,8 @@ impl SortOrder {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum ViewMode {
     #[default]
     Cards,
@@ -129,6 +133,8 @@ pub struct BrowseState {
 pub struct InstalledState {
     pub toggling: HashSet<String>,
     pub uninstalling: HashSet<String>,
+    pub updating: HashSet<String>,
+    pub updating_all: bool,
     pub search_query: String,
     pub pending_search: Option<String>,
     pub search_debounce_start: Option<std::time::Instant>,
@@ -232,7 +238,7 @@ impl Default for App {
         let system_is_dark = true;
         let settings = load_settings();
 
-        let saved_theme_mode: ThemeMode = settings.theme_mode.into();
+        let saved_theme_mode = settings.theme_mode;
         let use_omarchy = is_omarchy_available()
             && (saved_theme_mode == ThemeMode::Omarchy || saved_theme_mode == ThemeMode::System);
 
@@ -249,9 +255,9 @@ impl Default for App {
         };
 
         let browse = BrowseState {
-            view_mode: settings.view_mode.into(),
-            sort_field: settings.sort_field.into(),
-            sort_order: settings.sort_order.into(),
+            view_mode: settings.view_mode,
+            sort_field: settings.sort_field,
+            sort_order: settings.sort_order,
             ..Default::default()
         };
 
@@ -434,10 +440,10 @@ impl App {
 
     pub fn save_settings(&self) {
         let settings = crate::services::UserSettings {
-            theme_mode: self.theme_mode.into(),
-            view_mode: self.browse.view_mode.into(),
-            sort_field: self.browse.sort_field.into(),
-            sort_order: self.browse.sort_order.into(),
+            theme_mode: self.theme_mode,
+            view_mode: self.browse.view_mode,
+            sort_field: self.browse.sort_field,
+            sort_order: self.browse.sort_order,
             tray_enabled: self.tray_enabled,
         };
         let _ = crate::services::save_settings(&settings);

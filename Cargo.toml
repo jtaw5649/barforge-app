@@ -1,6 +1,6 @@
 [package]
 name = "waybar-manager"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2024"
 description = "Waybar Extension Manager - browse, install, and configure waybar modules"
 license = ""
@@ -21,8 +21,12 @@ serde_json = "1.0"
 jsonc-parser = { version = "0.28", features = ["serde", "cst"] }
 
 # Async/HTTP
-reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream"], default-features = false }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "io-util"] }
+
+# Archive extraction
+flate2 = "1"
+tar = "0.4"
 
 # File watching
 notify = "7"

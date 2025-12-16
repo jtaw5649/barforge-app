@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use super::{ModuleCategory, ModuleUuid, ModuleVersion};
+use super::{ModuleCategory, ModulePosition, ModuleUuid, ModuleVersion};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegistryModule {
@@ -64,6 +64,8 @@ pub struct InstalledModule {
     pub installed_at: chrono::DateTime<chrono::Utc>,
     #[serde(default)]
     pub registry_version: Option<ModuleVersion>,
+    #[serde(default)]
+    pub position: Option<ModulePosition>,
 }
 
 fn default_installed_at() -> chrono::DateTime<chrono::Utc> {
@@ -226,6 +228,7 @@ mod tests {
                 has_preferences: false,
                 installed_at: chrono::Utc::now(),
                 registry_version: None,
+                position: None,
             };
             assert!(module.is_custom_module());
         }
@@ -241,6 +244,7 @@ mod tests {
                 has_preferences: false,
                 installed_at: chrono::Utc::now(),
                 registry_version: None,
+                position: None,
             };
             assert!(!module.is_custom_module());
         }
@@ -256,6 +260,7 @@ mod tests {
                 has_preferences: false,
                 installed_at: chrono::Utc::now(),
                 registry_version: Some(ModuleVersion::try_from("2.0.0").unwrap()),
+                position: None,
             };
             assert!(module.has_update());
         }
@@ -271,6 +276,7 @@ mod tests {
                 has_preferences: false,
                 installed_at: chrono::Utc::now(),
                 registry_version: Some(ModuleVersion::try_from("1.0.0").unwrap()),
+                position: None,
             };
             assert!(!module.has_update());
         }
@@ -286,6 +292,7 @@ mod tests {
                 has_preferences: false,
                 installed_at: chrono::Utc::now(),
                 registry_version: None,
+                position: None,
             };
             assert!(!module.has_update());
         }

@@ -1,12 +1,12 @@
-use iced::widget::{button, column, container, row, text, toggler, Space};
+use iced::widget::{button, column, container, pick_list, row, text, toggler, Space};
 use iced::{Alignment, Background, Border, Element, Length};
 
 use crate::app::message::Message;
 use crate::app::state::ConfirmationAction;
-use crate::domain::InstalledModule;
+use crate::domain::{BarSection, InstalledModule};
 use crate::theme::{
-    button as btn_style, shadow_sm, AppTheme, FONT_2XS, FONT_SM, FONT_XS, RADIUS_MD, SPACE_LG,
-    SPACE_MD, SPACE_SM,
+    button as btn_style, shadow_sm, AppTheme, FONT_2XS, FONT_SM, FONT_XS, RADIUS_MD, RADIUS_SM,
+    SPACE_LG, SPACE_MD, SPACE_SM,
 };
 
 pub fn module_row(
@@ -17,10 +17,16 @@ pub fn module_row(
 ) -> Element<'static, Message> {
     let uuid = module.uuid.to_string();
     let uuid_toggle = uuid.clone();
+    let uuid_position = uuid.clone();
     let uuid_uninstall = uuid.clone();
     let name = module.waybar_module_name.clone();
     let name_for_confirm = name.clone();
     let enabled = module.enabled;
+    let current_section = module
+        .position
+        .as_ref()
+        .map(|p| p.section)
+        .unwrap_or(BarSection::Center);
 
     let status_text = if enabled {
         text("Enabled").size(FONT_2XS).color(theme.success)
@@ -41,6 +47,61 @@ pub fn module_row(
             .size(20.0)
             .into()
     };
+
+    let picker_surface = theme.bg_surface;
+    let picker_text = theme.text_normal;
+    let picker_text_muted = theme.text_muted;
+    let picker_border = theme.border_subtle;
+    let picker_primary = theme.primary;
+    let menu_surface = theme.bg_surface;
+    let menu_text = theme.text_normal;
+    let menu_selected = theme.primary;
+    let menu_border = theme.border_subtle;
+
+    let position_picker = pick_list(
+        BarSection::all(),
+        Some(current_section),
+        move |section| Message::SetModulePosition {
+            uuid: uuid_position.clone(),
+            section,
+        },
+    )
+    .padding([SPACE_SM / 2.0, SPACE_SM])
+    .text_size(FONT_XS)
+    .style(move |_theme, status| {
+        let border_color = match status {
+            iced::widget::pick_list::Status::Active => picker_border,
+            iced::widget::pick_list::Status::Hovered
+            | iced::widget::pick_list::Status::Opened { .. } => picker_primary,
+        };
+        iced::widget::pick_list::Style {
+            text_color: picker_text,
+            placeholder_color: picker_text_muted,
+            handle_color: picker_text_muted,
+            background: iced::Background::Color(picker_surface),
+            border: Border {
+                color: border_color,
+                width: 1.0,
+                radius: RADIUS_SM.into(),
+            },
+        }
+    })
+    .menu_style(move |_theme| iced::overlay::menu::Style {
+        background: iced::Background::Color(menu_surface),
+        border: Border {
+            color: menu_border,
+            width: 1.0,
+            radius: RADIUS_SM.into(),
+        },
+        text_color: menu_text,
+        selected_text_color: iced::Color::WHITE,
+        selected_background: iced::Background::Color(menu_selected),
+        shadow: iced::Shadow {
+            color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.2),
+            offset: iced::Vector::new(0.0, 2.0),
+            blur_radius: 4.0,
+        },
+    });
 
     let uninstall_widget: Element<Message> = if is_uninstalling {
         container(text("Removing...").size(FONT_XS).color(theme.text_muted))
@@ -73,6 +134,7 @@ pub fn module_row(
         row![
             info_column,
             Space::new().width(Length::Fill),
+            position_picker,
             toggle_widget,
             uninstall_widget,
         ]
