@@ -7,7 +7,6 @@ use crate::app::message::Message;
 use crate::app::state::{Screen, SortField, SortOrder};
 use crate::domain::RegistryModule;
 use crate::icons::Icon;
-use crate::services::CompatibilityStatus;
 use crate::theme::{
     AppTheme, FONT_SM, FONT_XS, ICON_XS, RADIUS_SM, SPACE_MD, SPACE_SM, SPACE_XS,
 };
@@ -20,7 +19,6 @@ pub fn module_table<'a>(
     theme: &AppTheme,
     sort_field: SortField,
     sort_order: SortOrder,
-    waybar_version: Option<&str>,
 ) -> Element<'a, Message> {
     let theme_copy = *theme;
 
@@ -87,14 +85,6 @@ pub fn module_table<'a>(
         .map(|module| {
             let uuid = module.uuid.to_string();
             let is_installed = installed_uuids.contains(&uuid);
-            let compatibility =
-                CompatibilityStatus::from_versions(&module.waybar_versions, waybar_version);
-
-            let compat_color = match compatibility {
-                CompatibilityStatus::Compatible => theme_copy.success,
-                CompatibilityStatus::MaybeCompatible => theme_copy.warning,
-                CompatibilityStatus::Unknown => theme_copy.text_faint,
-            };
 
             let status_elem: Element<Message> = if is_installed {
                 row![
@@ -105,7 +95,7 @@ pub fn module_table<'a>(
                 .align_y(iced::Alignment::Center)
                 .into()
             } else {
-                text("●").size(FONT_XS).color(compat_color).into()
+                Space::new().into()
             };
 
             let rating_text = module

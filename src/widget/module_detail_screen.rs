@@ -6,7 +6,6 @@ use crate::app::message::Message;
 use crate::app::state::ScreenshotState;
 use crate::domain::RegistryModule;
 use crate::icons::Icon;
-use crate::services::CompatibilityStatus;
 use crate::theme::{
     button as btn_style, container as cont_style, AppTheme, FONT_2XL, FONT_LG, FONT_MD, FONT_SM,
     FONT_XS, ICON_MD, ICON_SM, RADIUS_MD, RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XL,
@@ -46,7 +45,6 @@ pub fn module_detail_screen<'a>(
     installed_at: Option<DateTime<Utc>>,
     installing: bool,
     theme: &'a AppTheme,
-    waybar_version: Option<&str>,
 ) -> Element<'a, Message> {
     let theme_copy = *theme;
     let badge_bg = category_style::badge_color(module.category);
@@ -128,36 +126,6 @@ pub fn module_detail_screen<'a>(
                     .into(),
             );
         }
-
-        let compat_status = CompatibilityStatus::from_versions(&module.waybar_versions, waybar_version);
-        let (compat_color, compat_text) = match compat_status {
-            CompatibilityStatus::Compatible => (theme.success, "Compatible"),
-            CompatibilityStatus::MaybeCompatible => (theme.warning, "May be compatible"),
-            CompatibilityStatus::Unknown => (theme.text_faint, "Compatibility unknown"),
-        };
-
-        stats_items.push(Space::new().width(SPACE_MD).into());
-        stats_items.push(
-            row![
-                container(Space::new())
-                    .width(Length::Fixed(8.0))
-                    .height(Length::Fixed(8.0))
-                    .style(move |_: &iced::Theme| iced::widget::container::Style {
-                        background: Some(Background::Color(compat_color)),
-                        border: Border {
-                            radius: 4.0.into(),
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    }),
-                text(compat_text)
-                    .size(FONT_XS)
-                    .color(theme.text_muted),
-            ]
-            .spacing(SPACE_XS)
-            .align_y(Alignment::Center)
-            .into(),
-        );
 
         let stats_row = row(stats_items).align_y(Alignment::Center);
 
@@ -317,19 +285,6 @@ pub fn module_detail_screen<'a>(
                 text("Last Updated").size(FONT_SM).color(theme.text_muted),
                 Space::new().width(Length::Fill),
                 text(format_relative_time(last_updated)).size(FONT_SM).color(theme.text_normal),
-            ]
-            .width(Length::Fill)
-            .into(),
-        );
-    }
-
-    if !module.waybar_versions.is_empty() {
-        let versions_text = module.waybar_versions.join(", ");
-        info_items.push(
-            row![
-                text("Waybar Versions").size(FONT_SM).color(theme.text_muted),
-                Space::new().width(Length::Fill),
-                text(versions_text).size(FONT_SM).color(theme.text_normal),
             ]
             .width(Length::Fill)
             .into(),

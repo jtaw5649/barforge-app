@@ -16,7 +16,6 @@ pub struct RegistryModule {
     pub screenshot: Option<String>,
     pub repo_url: String,
     pub downloads: u64,
-    pub waybar_versions: Vec<String>,
     #[serde(default)]
     pub version: Option<ModuleVersion>,
     #[serde(default)]
@@ -140,7 +139,6 @@ mod tests {
             screenshot: None,
             repo_url: "https://github.com/test/test".to_string(),
             downloads: 100,
-            waybar_versions: vec!["0.10".to_string(), "0.11".to_string()],
             version: Some(create_test_version()),
             last_updated: None,
             rating: None,

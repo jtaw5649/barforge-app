@@ -3,7 +3,6 @@ pub mod paths;
 pub mod preferences;
 pub mod settings;
 pub mod waybar_config;
-pub mod waybar_version;
 mod module_service;
 mod registry_service;
 
@@ -15,4 +14,3 @@ pub use preferences::{
 };
 pub use registry_service::{RegistryError, RegistryService};
 pub use settings::{load_settings, save_settings, UserSettings};
-pub use waybar_version::{detect_waybar_version, CompatibilityStatus};

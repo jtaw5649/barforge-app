@@ -703,7 +703,6 @@ impl App {
                 installed_at,
                 self.module_detail.installing,
                 &self.theme,
-                self.waybar_version.as_deref(),
             );
         }
         empty_state(
@@ -1033,7 +1032,6 @@ impl App {
                         &self.theme,
                         self.browse.sort_field,
                         self.browse.sort_order,
-                        self.waybar_version.as_deref(),
                     ))
                     .padding(SPACING_LG)
                     .width(Length::Fill)
@@ -1043,17 +1041,15 @@ impl App {
                     let theme = self.theme;
                     let installed_uuids = self.installed_uuids.clone();
                     let modules: Vec<_> = filtered.into_iter().cloned().collect();
-                    let waybar_version = self.waybar_version.clone();
 
                     responsive(move |size| {
                         let card_width = calculate_card_width(size.width - 2.0 * SPACING_LG);
-                        let wb_ver = waybar_version.as_deref();
                         let cards: Vec<Element<Message>> = modules
                             .iter()
                             .map(|m| {
                                 let uuid = m.uuid.to_string();
                                 let is_installed = installed_uuids.contains(&uuid);
-                                module_card(m, is_installed, &theme, card_width, wb_ver)
+                                module_card(m, is_installed, &theme, card_width)
                             })
                             .collect();
 

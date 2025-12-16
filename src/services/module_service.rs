@@ -214,7 +214,6 @@ mod tests {
             screenshot: None,
             repo_url: "https://github.com/test/test".to_string(),
             downloads: 0,
-            waybar_versions: vec!["0.10".to_string()],
             version: None,
             last_updated: None,
             rating: None,

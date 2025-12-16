@@ -6,8 +6,8 @@ use iced::widget::image;
 
 use crate::domain::{InstalledModule, ModuleCategory, RegistryIndex};
 use crate::services::{
-    detect_waybar_version, is_omarchy_available, load_omarchy_palette, load_settings,
-    ModulePreferences, OmarchyPalette, PreferencesSchema,
+    is_omarchy_available, load_omarchy_palette, load_settings, ModulePreferences, OmarchyPalette,
+    PreferencesSchema,
 };
 use crate::theme::{AppTheme, ThemeMode};
 
@@ -227,8 +227,6 @@ pub struct App {
     pub spinner_frame: usize,
     pub last_spinner_update: Instant,
 
-    pub waybar_version: Option<String>,
-
     pub tray_enabled: bool,
     pub tray_receiver: Option<Receiver<TrayEvent>>,
 }
@@ -287,7 +285,6 @@ impl Default for App {
             preferences: PreferencesState::default(),
             spinner_frame: 0,
             last_spinner_update: Instant::now(),
-            waybar_version: detect_waybar_version(),
             tray_enabled,
             tray_receiver,
         }

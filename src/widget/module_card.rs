@@ -5,7 +5,6 @@ use crate::app::message::Message;
 use crate::app::state::Screen;
 use crate::domain::RegistryModule;
 use crate::icons::Icon;
-use crate::services::CompatibilityStatus;
 use crate::theme::{
     shadow_md, shadow_hover, AppTheme, FONT_LG, FONT_SM, FONT_XS, ICON_SM, ICON_XS, RADIUS_LG,
     RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS,
@@ -19,7 +18,6 @@ pub fn module_card(
     is_installed: bool,
     theme: &AppTheme,
     width: f32,
-    waybar_version: Option<&str>,
 ) -> Element<'static, Message> {
     let uuid = module.uuid.to_string();
     let name = module.name.clone();
@@ -30,26 +28,13 @@ pub fn module_card(
     let rating = module.rating;
     let verified = module.verified_author;
     let last_updated = module.last_updated;
-    let compatibility = CompatibilityStatus::from_versions(&module.waybar_versions, waybar_version);
 
     let theme_copy = *theme;
     let badge_bg = category_style::badge_color(category);
     let badge_text = category_style::badge_text_color(category);
 
-    let compat_color = match compatibility {
-        CompatibilityStatus::Compatible => theme.success,
-        CompatibilityStatus::MaybeCompatible => theme.warning,
-        CompatibilityStatus::Unknown => theme.text_faint,
-    };
-
-    let compat_dot = text("●").size(FONT_XS).color(compat_color);
-
-    let title_row = row![
-        text(name).size(FONT_LG).color(theme.text_normal),
-        Space::new().width(Length::Fill),
-        compat_dot,
-    ]
-    .align_y(iced::Alignment::Center);
+    let title_row = row![text(name).size(FONT_LG).color(theme.text_normal),]
+        .align_y(iced::Alignment::Center);
 
     let author_row: Element<Message> = if verified {
         row![
