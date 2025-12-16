@@ -1,41 +1,229 @@
-use iced::widget::{button, column, container, text};
-use iced::{Element, Length};
+use iced::widget::{button, column, container, row, text, Space};
+use iced::{Background, Border, Element, Length};
 
 use crate::app::message::Message;
+use crate::app::state::Screen;
 use crate::domain::RegistryModule;
+use crate::icons::Icon;
+use crate::services::CompatibilityStatus;
 use crate::theme::{
-    button as btn_style, container as cont_style, CARD_WIDTH, SPACING_MD, SPACING_SM, THEME,
+    shadow_md, shadow_hover, AppTheme, FONT_LG, FONT_SM, FONT_XS, ICON_SM, ICON_XS, RADIUS_LG,
+    RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS,
 };
 
-pub fn module_card(module: &RegistryModule, is_installed: bool) -> Element<'static, Message> {
+fn format_relative_time(dt: &chrono::DateTime<chrono::Utc>) -> String {
+    let now = chrono::Utc::now();
+    let duration = now.signed_duration_since(*dt);
+
+    if duration.num_days() > 365 {
+        format!("{}y ago", duration.num_days() / 365)
+    } else if duration.num_days() > 30 {
+        format!("{}mo ago", duration.num_days() / 30)
+    } else if duration.num_days() > 0 {
+        format!("{}d ago", duration.num_days())
+    } else if duration.num_hours() > 0 {
+        format!("{}h ago", duration.num_hours())
+    } else {
+        "Just now".to_string()
+    }
+}
+
+fn rating_stars(rating: f32) -> String {
+    let full_stars = rating.floor() as usize;
+    let half_star = (rating - rating.floor()) >= 0.5;
+    let empty_stars = 5 - full_stars - if half_star { 1 } else { 0 };
+
+    let mut stars = "★".repeat(full_stars);
+    if half_star {
+        stars.push('⯪');
+    }
+    stars.push_str(&"☆".repeat(empty_stars));
+    stars
+}
+
+pub fn module_card(
+    module: &RegistryModule,
+    is_installed: bool,
+    theme: &AppTheme,
+    width: f32,
+    waybar_version: Option<&str>,
+) -> Element<'static, Message> {
     let uuid = module.uuid.to_string();
     let name = module.name.clone();
     let author = module.author.clone();
-    let category = module.category.display_name().to_string();
+    let description = module.truncated_description(100);
+    let category = module.category;
+    let downloads = module.formatted_downloads();
+    let rating = module.rating;
+    let verified = module.verified_author;
+    let last_updated = module.last_updated;
+    let compatibility = CompatibilityStatus::from_versions(&module.waybar_versions, waybar_version);
 
-    let install_section: Element<Message> = if is_installed {
-        text("Installed").size(12).color(THEME.success).into()
+    let theme_copy = *theme;
+    let badge_bg = category.badge_color();
+    let badge_text = category.badge_text_color();
+
+    let compat_color = match compatibility {
+        CompatibilityStatus::Compatible => theme.success,
+        CompatibilityStatus::MaybeCompatible => theme.warning,
+        CompatibilityStatus::Unknown => theme.text_faint,
+    };
+
+    let compat_dot = text("●").size(FONT_XS).color(compat_color);
+
+    let title_row = row![
+        text(name).size(FONT_LG).color(theme.text_normal),
+        Space::new().width(Length::Fill),
+        compat_dot,
+    ]
+    .align_y(iced::Alignment::Center);
+
+    let author_row: Element<Message> = if verified {
+        row![
+            text(format!("by {author}")).size(FONT_XS).color(theme.text_faint),
+            Icon::Check.colored(ICON_XS, theme.success),
+        ]
+        .spacing(SPACE_XS)
+        .align_y(iced::Alignment::Center)
+        .into()
     } else {
-        button(text("Install").size(12))
-            .on_press(Message::InstallModule(uuid.clone()))
-            .style(btn_style::primary)
-            .padding([SPACING_SM, SPACING_MD])
+        text(format!("by {author}"))
+            .size(FONT_XS)
+            .color(theme.text_faint)
             .into()
     };
 
-    container(
-        column![
-            text(name).size(16).color(THEME.text),
-            text(format!("by {author}"))
-                .size(12)
-                .color(THEME.text_secondary),
-            text(category).size(10).color(THEME.text_muted),
-            install_section,
-        ]
-        .spacing(SPACING_SM)
-        .padding(SPACING_MD),
+    let header = column![title_row, author_row].spacing(SPACE_2XS);
+
+    let desc = container(
+        text(description)
+            .size(FONT_SM)
+            .color(theme.text_muted),
     )
-    .style(cont_style::card)
-    .width(Length::Fixed(CARD_WIDTH))
-    .into()
+    .height(Length::Fixed(48.0));
+
+    let category_badge = container(
+        text(category.display_name())
+            .size(FONT_XS)
+            .color(badge_text),
+    )
+    .padding([SPACE_XS, SPACE_SM])
+    .style(move |_: &iced::Theme| iced::widget::container::Style {
+        background: Some(Background::Color(badge_bg)),
+        border: Border {
+            radius: RADIUS_SM.into(),
+            width: 1.0,
+            color: iced::Color::from_rgba(badge_text.r, badge_text.g, badge_text.b, 0.2),
+        },
+        ..Default::default()
+    });
+
+    let download_row = row![
+        Icon::Download.colored(ICON_XS, theme.text_faint),
+        text(downloads).size(FONT_XS).color(theme.text_faint),
+    ]
+    .spacing(SPACE_XS)
+    .align_y(iced::Alignment::Center);
+
+    let rating_row: Element<Message> = if let Some(r) = rating {
+        row![
+            text(rating_stars(r)).size(FONT_XS).color(theme.warning),
+            text(format!("{:.1}", r)).size(FONT_XS).color(theme.text_faint),
+        ]
+        .spacing(SPACE_XS)
+        .align_y(iced::Alignment::Center)
+        .into()
+    } else {
+        Space::new().into()
+    };
+
+    let updated_row: Element<Message> = if let Some(dt) = last_updated {
+        text(format_relative_time(&dt))
+            .size(FONT_XS)
+            .color(theme.text_faint)
+            .into()
+    } else {
+        Space::new().into()
+    };
+
+    let stats_row = row![rating_row, download_row, updated_row]
+        .spacing(SPACE_MD)
+        .align_y(iced::Alignment::Center);
+
+    let footer = row![category_badge, Space::new().width(Length::Fill), stats_row]
+        .align_y(iced::Alignment::Center);
+
+    let install_indicator: Element<Message> = if is_installed {
+        container(
+            row![
+                Icon::Check.colored(ICON_SM, theme.success),
+                text("Installed").size(FONT_SM).color(theme.success),
+            ]
+            .spacing(SPACE_XS)
+            .align_y(iced::Alignment::Center),
+        )
+        .padding([SPACE_XS, SPACE_SM])
+        .style(move |_: &iced::Theme| iced::widget::container::Style {
+            background: Some(Background::Color(iced::Color::from_rgba(
+                theme_copy.success.r,
+                theme_copy.success.g,
+                theme_copy.success.b,
+                0.12,
+            ))),
+            border: Border {
+                radius: RADIUS_SM.into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .into()
+    } else {
+        Space::new().into()
+    };
+
+    let status_row = row![Space::new().width(Length::Fill), install_indicator];
+
+    let card_content = column![header, desc, footer, status_row]
+        .spacing(SPACE_MD)
+        .width(Length::Fill);
+
+    button(card_content)
+        .on_press(Message::Navigate(Screen::ModuleDetail(uuid)))
+        .padding([SPACE_LG, SPACE_MD])
+        .style(move |_, status| {
+            let (bg, border_color, border_width, shadow) = match status {
+                iced::widget::button::Status::Hovered => (
+                    theme_copy.bg_elevated,
+                    theme_copy.accent,
+                    1.5,
+                    shadow_hover(),
+                ),
+                iced::widget::button::Status::Pressed => (
+                    theme_copy.bg_surface,
+                    theme_copy.accent,
+                    1.5,
+                    shadow_md(),
+                ),
+                _ => (
+                    theme_copy.bg_surface,
+                    theme_copy.border_subtle,
+                    1.0,
+                    shadow_md(),
+                ),
+            };
+            iced::widget::button::Style {
+                background: Some(Background::Color(bg)),
+                border: Border {
+                    color: border_color,
+                    width: border_width,
+                    radius: RADIUS_LG.into(),
+                },
+                shadow,
+                ..Default::default()
+            }
+        })
+        .width(Length::Fixed(width))
+        .into()
 }
+
+const SPACE_2XS: f32 = 2.0;

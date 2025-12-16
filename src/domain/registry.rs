@@ -17,6 +17,14 @@ pub struct RegistryModule {
     pub repo_url: String,
     pub downloads: u64,
     pub waybar_versions: Vec<String>,
+    #[serde(default)]
+    pub version: Option<ModuleVersion>,
+    #[serde(default)]
+    pub last_updated: Option<chrono::DateTime<chrono::Utc>>,
+    #[serde(default)]
+    pub rating: Option<f32>,
+    #[serde(default)]
+    pub verified_author: bool,
 }
 
 impl RegistryModule {
@@ -25,6 +33,22 @@ impl RegistryModule {
         self.name.to_lowercase().contains(&query_lower)
             || self.description.to_lowercase().contains(&query_lower)
             || self.author.to_lowercase().contains(&query_lower)
+    }
+
+    pub fn formatted_downloads(&self) -> String {
+        match self.downloads {
+            0..=999 => self.downloads.to_string(),
+            1_000..=999_999 => format!("{:.1}k", self.downloads as f64 / 1_000.0),
+            _ => format!("{:.1}M", self.downloads as f64 / 1_000_000.0),
+        }
+    }
+
+    pub fn truncated_description(&self, max_len: usize) -> String {
+        if self.description.len() <= max_len {
+            self.description.clone()
+        } else {
+            format!("{}...", &self.description[..max_len.saturating_sub(3)])
+        }
     }
 }
 
@@ -36,11 +60,25 @@ pub struct InstalledModule {
     pub enabled: bool,
     pub waybar_module_name: String,
     pub has_preferences: bool,
+    #[serde(default = "default_installed_at")]
+    pub installed_at: chrono::DateTime<chrono::Utc>,
+    #[serde(default)]
+    pub registry_version: Option<ModuleVersion>,
+}
+
+fn default_installed_at() -> chrono::DateTime<chrono::Utc> {
+    chrono::Utc::now()
 }
 
 impl InstalledModule {
     pub fn is_custom_module(&self) -> bool {
         self.waybar_module_name.starts_with("custom/")
+    }
+
+    pub fn has_update(&self) -> bool {
+        self.registry_version
+            .as_ref()
+            .is_some_and(|registry_ver| registry_ver > &self.version)
     }
 }
 
@@ -101,6 +139,10 @@ mod tests {
             repo_url: "https://github.com/test/test".to_string(),
             downloads: 100,
             waybar_versions: vec!["0.10".to_string(), "0.11".to_string()],
+            version: Some(create_test_version()),
+            last_updated: None,
+            rating: None,
+            verified_author: false,
         }
     }
 
@@ -131,6 +173,43 @@ mod tests {
             let module = create_test_registry_module("test");
             assert!(!module.matches_search("nonexistent"));
         }
+
+        #[test]
+        fn test_formatted_downloads_under_thousand() {
+            let mut module = create_test_registry_module("test");
+            module.downloads = 500;
+            assert_eq!(module.formatted_downloads(), "500");
+        }
+
+        #[test]
+        fn test_formatted_downloads_thousands() {
+            let mut module = create_test_registry_module("test");
+            module.downloads = 1_500;
+            assert_eq!(module.formatted_downloads(), "1.5k");
+            module.downloads = 12_300;
+            assert_eq!(module.formatted_downloads(), "12.3k");
+        }
+
+        #[test]
+        fn test_formatted_downloads_millions() {
+            let mut module = create_test_registry_module("test");
+            module.downloads = 1_500_000;
+            assert_eq!(module.formatted_downloads(), "1.5M");
+        }
+
+        #[test]
+        fn test_truncated_description_short() {
+            let mut module = create_test_registry_module("test");
+            module.description = "Short desc".to_string();
+            assert_eq!(module.truncated_description(100), "Short desc");
+        }
+
+        #[test]
+        fn test_truncated_description_long() {
+            let mut module = create_test_registry_module("test");
+            module.description = "This is a very long description that should be truncated".to_string();
+            assert_eq!(module.truncated_description(20), "This is a very lo...");
+        }
     }
 
     mod installed_module {
@@ -145,6 +224,8 @@ mod tests {
                 enabled: true,
                 waybar_module_name: "custom/weather".to_string(),
                 has_preferences: false,
+                installed_at: chrono::Utc::now(),
+                registry_version: None,
             };
             assert!(module.is_custom_module());
         }
@@ -158,8 +239,55 @@ mod tests {
                 enabled: true,
                 waybar_module_name: "clock".to_string(),
                 has_preferences: false,
+                installed_at: chrono::Utc::now(),
+                registry_version: None,
             };
             assert!(!module.is_custom_module());
+        }
+
+        #[test]
+        fn test_has_update_true_when_newer_version() {
+            let module = InstalledModule {
+                uuid: create_test_uuid("test"),
+                version: ModuleVersion::try_from("1.0.0").unwrap(),
+                install_path: PathBuf::from("/test"),
+                enabled: true,
+                waybar_module_name: "custom/test".to_string(),
+                has_preferences: false,
+                installed_at: chrono::Utc::now(),
+                registry_version: Some(ModuleVersion::try_from("2.0.0").unwrap()),
+            };
+            assert!(module.has_update());
+        }
+
+        #[test]
+        fn test_has_update_false_when_same_version() {
+            let module = InstalledModule {
+                uuid: create_test_uuid("test"),
+                version: ModuleVersion::try_from("1.0.0").unwrap(),
+                install_path: PathBuf::from("/test"),
+                enabled: true,
+                waybar_module_name: "custom/test".to_string(),
+                has_preferences: false,
+                installed_at: chrono::Utc::now(),
+                registry_version: Some(ModuleVersion::try_from("1.0.0").unwrap()),
+            };
+            assert!(!module.has_update());
+        }
+
+        #[test]
+        fn test_has_update_false_when_no_registry_version() {
+            let module = InstalledModule {
+                uuid: create_test_uuid("test"),
+                version: ModuleVersion::try_from("1.0.0").unwrap(),
+                install_path: PathBuf::from("/test"),
+                enabled: true,
+                waybar_module_name: "custom/test".to_string(),
+                has_preferences: false,
+                installed_at: chrono::Utc::now(),
+                registry_version: None,
+            };
+            assert!(!module.has_update());
         }
     }
 

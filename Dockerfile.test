@@ -3,7 +3,6 @@ FROM archlinux:latest
 RUN pacman -Syu --noconfirm && \
     pacman -S --noconfirm \
         rust \
-        gtk4 libadwaita \
         xorg-server-xvfb \
         pkgconf gcc \
     && pacman -Scc --noconfirm

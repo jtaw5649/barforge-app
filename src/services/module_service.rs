@@ -124,6 +124,8 @@ impl ModuleService {
             enabled: false,
             waybar_module_name,
             has_preferences: false,
+            installed_at: chrono::Utc::now(),
+            registry_version: registry_module.version.clone(),
         };
 
         self.installed.borrow_mut().insert(uuid_str, installed.clone());
@@ -212,6 +214,10 @@ mod tests {
             repo_url: "https://github.com/test/test".to_string(),
             downloads: 0,
             waybar_versions: vec!["0.10".to_string()],
+            version: None,
+            last_updated: None,
+            rating: None,
+            verified_author: false,
         }
     }
 

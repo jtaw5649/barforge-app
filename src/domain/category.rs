@@ -1,6 +1,9 @@
 use std::fmt;
 
+use iced::Color;
 use serde::{Deserialize, Serialize};
+
+use crate::theme::palette;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -73,6 +76,42 @@ impl ModuleCategory {
             Self::Media,
             Self::Custom,
         ]
+    }
+
+    pub fn badge_color(&self) -> Color {
+        match self {
+            Self::System => palette::BADGE_SYSTEM,
+            Self::Hardware => palette::BADGE_HARDWARE,
+            Self::Network => palette::BADGE_NETWORK,
+            Self::Audio => palette::BADGE_AUDIO,
+            Self::Power => palette::BADGE_POWER,
+            Self::Time => palette::BADGE_TIME,
+            Self::Workspace => palette::BADGE_WORKSPACE,
+            Self::Window => palette::BADGE_WINDOW,
+            Self::Tray => palette::BADGE_TRAY,
+            Self::Weather => palette::BADGE_WEATHER,
+            Self::Productivity => palette::BADGE_PRODUCTIVITY,
+            Self::Media => palette::BADGE_MEDIA,
+            Self::Custom => palette::BADGE_CUSTOM,
+        }
+    }
+
+    pub fn badge_text_color(&self) -> Color {
+        match self {
+            Self::System => palette::BADGE_TEXT_SYSTEM,
+            Self::Hardware => palette::BADGE_TEXT_HARDWARE,
+            Self::Network => palette::BADGE_TEXT_NETWORK,
+            Self::Audio => palette::BADGE_TEXT_AUDIO,
+            Self::Power => palette::BADGE_TEXT_POWER,
+            Self::Time => palette::BADGE_TEXT_TIME,
+            Self::Workspace => palette::BADGE_TEXT_WORKSPACE,
+            Self::Window => palette::BADGE_TEXT_WINDOW,
+            Self::Tray => palette::BADGE_TEXT_TRAY,
+            Self::Weather => palette::BADGE_TEXT_WEATHER,
+            Self::Productivity => palette::BADGE_TEXT_PRODUCTIVITY,
+            Self::Media => palette::BADGE_TEXT_MEDIA,
+            Self::Custom => palette::BADGE_TEXT_CUSTOM,
+        }
     }
 }
 

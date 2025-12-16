@@ -44,6 +44,20 @@ pub fn registry_cache_path() -> PathBuf {
     cache_dir().join("registry.json")
 }
 
+pub fn screenshots_cache_dir() -> PathBuf {
+    cache_dir().join("screenshots")
+}
+
+pub fn screenshot_cache_path(url: &str) -> PathBuf {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    let mut hasher = DefaultHasher::new();
+    url.hash(&mut hasher);
+    let hash = hasher.finish();
+    screenshots_cache_dir().join(format!("{:016x}.png", hash))
+}
+
 pub fn preferences_dir() -> PathBuf {
     config_dir().join("prefs")
 }
@@ -127,5 +141,33 @@ mod tests {
     fn test_module_preferences_path_is_json() {
         let path = module_preferences_path("weather@test");
         assert!(path.to_string_lossy().ends_with("weather@test.json"));
+    }
+
+    #[test]
+    fn test_screenshots_cache_dir_under_cache() {
+        let path = screenshots_cache_dir();
+        assert!(path.starts_with(cache_dir()));
+        assert!(path.to_string_lossy().ends_with("screenshots"));
+    }
+
+    #[test]
+    fn test_screenshot_cache_path_is_png() {
+        let path = screenshot_cache_path("https://example.com/image.png");
+        assert!(path.to_string_lossy().ends_with(".png"));
+    }
+
+    #[test]
+    fn test_screenshot_cache_path_deterministic() {
+        let url = "https://example.com/screenshot.png";
+        let path1 = screenshot_cache_path(url);
+        let path2 = screenshot_cache_path(url);
+        assert_eq!(path1, path2);
+    }
+
+    #[test]
+    fn test_screenshot_cache_path_different_urls() {
+        let path1 = screenshot_cache_path("https://example.com/a.png");
+        let path2 = screenshot_cache_path("https://example.com/b.png");
+        assert_ne!(path1, path2);
     }
 }
