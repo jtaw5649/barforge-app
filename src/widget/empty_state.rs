@@ -24,25 +24,6 @@ pub fn empty_state(
     .into()
 }
 
-pub fn empty_state_text(
-    icon_text: &'static str,
-    title: &'static str,
-    subtitle: &'static str,
-    theme: &AppTheme,
-) -> Element<'static, Message> {
-    container(
-        column![
-            text(icon_text).size(ICON_2XL).color(theme.text_muted),
-            text(title).size(FONT_2XL).color(theme.text_normal),
-            text(subtitle).size(FONT_SM).color(theme.text_muted),
-        ]
-        .spacing(SPACE_MD)
-        .align_x(Alignment::Center),
-    )
-    .center(Length::Fill)
-    .into()
-}
-
 pub fn empty_state_dynamic(
     icon: Icon,
     title: &'static str,

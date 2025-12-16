@@ -1,17 +1,18 @@
-use std::path::PathBuf;
+use std::io::Cursor;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use flate2::read::GzDecoder;
 use iced::widget::image;
 use iced::{Subscription, Task};
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use tar::Archive;
 use tokio::sync::mpsc as async_mpsc;
 use tokio::time::timeout;
 
 use crate::app::Message;
-use crate::domain::{InstalledModule, ModuleVersion, RegistryIndex};
-use crate::services::paths;
-
-const REGISTRY_URL: &str = "https://jtaw5649.github.io/waybar-modules-registry/index.json";
+use crate::domain::{BarSection, InstalledModule, ModuleVersion, RegistryIndex};
+use crate::services::paths::{self, HTTP_CLIENT, REGISTRY_URL};
 
 pub fn initial_load() -> Task<Message> {
     Task::batch([load_installed(), load_registry()])
@@ -36,13 +37,32 @@ pub fn uninstall_module(uuid: String) -> Task<Message> {
     Task::perform(uninstall_module_async(uuid), Message::UninstallCompleted)
 }
 
+pub fn change_module_position(uuid: String, section: crate::domain::BarSection) -> Task<Message> {
+    Task::perform(
+        change_module_position_async(uuid, section),
+        Message::PositionChanged,
+    )
+}
+
+pub fn update_module(uuid: String, repo_url: String, new_version: ModuleVersion) -> Task<Message> {
+    Task::perform(
+        update_module_async(uuid, repo_url, new_version),
+        Message::UpdateCompleted,
+    )
+}
+
+pub fn update_all_modules(updates: Vec<(String, String, ModuleVersion)>) -> Task<Message> {
+    Task::perform(update_all_modules_async(updates), Message::UpdateAllCompleted)
+}
+
 pub fn install_module(
     uuid: String,
     name: String,
     version: Option<ModuleVersion>,
+    repo_url: String,
 ) -> Task<Message> {
     Task::perform(
-        install_module_async(uuid, name, version),
+        install_module_async(uuid, name, version, repo_url),
         Message::InstallCompleted,
     )
 }
@@ -51,13 +71,17 @@ async fn install_module_async(
     uuid: String,
     name: String,
     version: Option<ModuleVersion>,
+    repo_url: String,
 ) -> Result<InstalledModule, String> {
-    use std::fs;
-
     let install_path = paths::module_install_path(&uuid);
 
-    fs::create_dir_all(&install_path)
+    tokio::fs::create_dir_all(&install_path)
+        .await
         .map_err(|e| format!("Failed to create install directory: {e}"))?;
+
+    download_module_files(&repo_url, &install_path).await?;
+
+    let has_preferences = install_path.join("preferences.schema.json").exists();
 
     let version = version.unwrap_or_else(|| {
         ModuleVersion::try_from("1.0.0").expect("valid default version")
@@ -72,9 +96,10 @@ async fn install_module_async(
         install_path,
         enabled: false,
         waybar_module_name,
-        has_preferences: false,
+        has_preferences,
         installed_at: chrono::Utc::now(),
         registry_version: Some(version),
+        position: None,
     };
 
     let state_path = paths::data_dir().join("installed.json");
@@ -94,7 +119,8 @@ async fn install_module_async(
         .map_err(|e| format!("Failed to serialize state: {e}"))?;
 
     if let Some(parent) = state_path.parent() {
-        fs::create_dir_all(parent)
+        tokio::fs::create_dir_all(parent)
+            .await
             .map_err(|e| format!("Failed to create data directory: {e}"))?;
     }
 
@@ -104,6 +130,213 @@ async fn install_module_async(
 
     tracing::info!("Installed module: {}", uuid);
     Ok(installed)
+}
+
+async fn update_module_async(
+    uuid: String,
+    repo_url: String,
+    new_version: ModuleVersion,
+) -> Result<InstalledModule, String> {
+    let install_path = paths::module_install_path(&uuid);
+
+    if install_path.exists() {
+        tokio::fs::remove_dir_all(&install_path)
+            .await
+            .map_err(|e| format!("Failed to remove old module files: {e}"))?;
+    }
+
+    tokio::fs::create_dir_all(&install_path)
+        .await
+        .map_err(|e| format!("Failed to create install directory: {e}"))?;
+
+    download_module_files(&repo_url, &install_path).await?;
+
+    let has_preferences = install_path.join("preferences.schema.json").exists();
+
+    let state_path = paths::data_dir().join("installed.json");
+    let content = tokio::fs::read_to_string(&state_path)
+        .await
+        .map_err(|e| format!("Failed to read state: {e}"))?;
+
+    let mut modules: Vec<InstalledModule> =
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse state: {e}"))?;
+
+    let module = modules
+        .iter_mut()
+        .find(|m| m.uuid.to_string() == uuid)
+        .ok_or_else(|| format!("Module not found: {uuid}"))?;
+
+    module.version = new_version.clone();
+    module.registry_version = Some(new_version);
+    module.has_preferences = has_preferences;
+
+    let updated = module.clone();
+
+    let new_content =
+        serde_json::to_string_pretty(&modules).map_err(|e| format!("Failed to serialize: {e}"))?;
+
+    tokio::fs::write(&state_path, new_content)
+        .await
+        .map_err(|e| format!("Failed to save state: {e}"))?;
+
+    tracing::info!("Updated module: {}", uuid);
+    Ok(updated)
+}
+
+async fn update_all_modules_async(
+    updates: Vec<(String, String, ModuleVersion)>,
+) -> Result<usize, String> {
+    let mut success_count = 0;
+
+    for (uuid, repo_url, new_version) in updates {
+        match update_module_async(uuid.clone(), repo_url, new_version).await {
+            Ok(_) => {
+                success_count += 1;
+                tracing::info!("Updated module: {}", uuid);
+            }
+            Err(e) => {
+                tracing::warn!("Failed to update module {}: {}", uuid, e);
+            }
+        }
+    }
+
+    Ok(success_count)
+}
+
+fn parse_github_url(repo_url: &str) -> Result<(String, String), String> {
+    let url = repo_url
+        .trim_end_matches('/')
+        .trim_end_matches(".git");
+
+    let parts: Vec<&str> = url.split('/').collect();
+    let len = parts.len();
+
+    if len < 2 {
+        return Err(format!("Invalid GitHub URL: {repo_url}"));
+    }
+
+    let owner = parts[len - 2].to_string();
+    let repo = parts[len - 1].to_string();
+
+    if owner.is_empty() || repo.is_empty() {
+        return Err(format!("Could not extract owner/repo from: {repo_url}"));
+    }
+
+    Ok((owner, repo))
+}
+
+async fn download_module_files(repo_url: &str, install_path: &Path) -> Result<(), String> {
+    let (owner, repo) = parse_github_url(repo_url)?;
+
+    let tarball_url = format!(
+        "https://api.github.com/repos/{owner}/{repo}/tarball/main"
+    );
+
+    tracing::info!("Downloading module from {}", tarball_url);
+
+    let response = HTTP_CLIENT
+        .get(&tarball_url)
+        .header("Accept", "application/vnd.github+json")
+        .header("User-Agent", "waybar-manager")
+        .send()
+        .await
+        .map_err(|e| format!("Failed to download module: {e}"))?;
+
+    if !response.status().is_success() {
+        let fallback_url = format!(
+            "https://api.github.com/repos/{owner}/{repo}/tarball/master"
+        );
+
+        tracing::info!("main branch not found, trying master: {}", fallback_url);
+
+        let response = HTTP_CLIENT
+            .get(&fallback_url)
+            .header("Accept", "application/vnd.github+json")
+            .header("User-Agent", "waybar-manager")
+            .send()
+            .await
+            .map_err(|e| format!("Failed to download module: {e}"))?;
+
+        if !response.status().is_success() {
+            return Err(format!(
+                "Failed to download from GitHub: HTTP {}",
+                response.status()
+            ));
+        }
+
+        return extract_tarball(response, install_path).await;
+    }
+
+    extract_tarball(response, install_path).await
+}
+
+async fn extract_tarball(response: reqwest::Response, install_path: &Path) -> Result<(), String> {
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read response body: {e}"))?;
+
+    let install_path = install_path.to_path_buf();
+
+    tokio::task::spawn_blocking(move || {
+        extract_tarball_sync(&bytes, &install_path)
+    })
+    .await
+    .map_err(|e| format!("Task failed: {e}"))?
+}
+
+fn extract_tarball_sync(bytes: &[u8], install_path: &Path) -> Result<(), String> {
+    let cursor = Cursor::new(bytes);
+    let decoder = GzDecoder::new(cursor);
+    let mut archive = Archive::new(decoder);
+
+    let mut extracted_count = 0;
+
+    for entry in archive
+        .entries()
+        .map_err(|e| format!("Failed to read archive entries: {e}"))?
+    {
+        let mut entry = entry.map_err(|e| format!("Failed to read entry: {e}"))?;
+
+        let path = entry
+            .path()
+            .map_err(|e| format!("Failed to get entry path: {e}"))?
+            .into_owned();
+
+        let components: Vec<_> = path.components().collect();
+        if components.len() <= 1 {
+            continue;
+        }
+
+        let relative_path: PathBuf = components[1..].iter().collect();
+        let dest_path = install_path.join(&relative_path);
+
+        if entry.header().entry_type().is_dir() {
+            std::fs::create_dir_all(&dest_path)
+                .map_err(|e| format!("Failed to create directory {}: {e}", dest_path.display()))?;
+        } else if entry.header().entry_type().is_file() {
+            if let Some(parent) = dest_path.parent() {
+                std::fs::create_dir_all(parent)
+                    .map_err(|e| format!("Failed to create parent directory: {e}"))?;
+            }
+
+            let mut file = std::fs::File::create(&dest_path)
+                .map_err(|e| format!("Failed to create file {}: {e}", dest_path.display()))?;
+
+            std::io::copy(&mut entry, &mut file)
+                .map_err(|e| format!("Failed to write file {}: {e}", dest_path.display()))?;
+
+            extracted_count += 1;
+        }
+    }
+
+    tracing::info!("Extracted {} files to {}", extracted_count, install_path.display());
+
+    if extracted_count == 0 {
+        return Err("No files extracted from archive".to_string());
+    }
+
+    Ok(())
 }
 
 async fn fetch_registry_async() -> Result<RegistryIndex, String> {
@@ -117,7 +350,7 @@ async fn fetch_registry_async() -> Result<RegistryIndex, String> {
     }
 
     tracing::info!("Fetching registry from {}", REGISTRY_URL);
-    let response = match reqwest::get(REGISTRY_URL).await {
+    let response = match HTTP_CLIENT.get(REGISTRY_URL).send().await {
         Ok(resp) => resp,
         Err(e) => {
             tracing::warn!("Network error: {e}, using sample data");
@@ -287,6 +520,8 @@ async fn load_installed_async() -> Result<Vec<InstalledModule>, String> {
 }
 
 async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (String, String)> {
+    use crate::services::waybar_config;
+
     let state_path = paths::data_dir().join("installed.json");
 
     let content = tokio::fs::read_to_string(&state_path)
@@ -301,6 +536,13 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
         .find(|m| m.uuid.to_string() == uuid)
         .ok_or_else(|| (uuid.clone(), format!("Module not found: {uuid}")))?;
 
+    let waybar_module_name = module.waybar_module_name.clone();
+    let section = module
+        .position
+        .as_ref()
+        .map(|p| p.section)
+        .unwrap_or(BarSection::Center);
+
     module.enabled = enabled;
 
     let new_content =
@@ -310,7 +552,83 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
         .await
         .map_err(|e| (uuid.clone(), format!("Failed to save state: {e}")))?;
 
+    if let Ok(waybar_content) = waybar_config::load_config().await {
+        let modified = if enabled {
+            waybar_config::add_module(&waybar_content, &waybar_module_name, section)
+        } else {
+            waybar_config::remove_module(&waybar_content, &waybar_module_name)
+        };
+
+        if let Ok(new_waybar_content) = modified {
+            let _ = waybar_config::backup_config().await;
+
+            if waybar_config::save_config(&new_waybar_content).await.is_ok() {
+                let _ = waybar_config::reload_waybar().await;
+            }
+        }
+    }
+
     tracing::info!("Module {} {}", uuid, if enabled { "enabled" } else { "disabled" });
+    Ok(uuid)
+}
+
+async fn change_module_position_async(
+    uuid: String,
+    new_section: BarSection,
+) -> Result<String, String> {
+    use crate::services::waybar_config;
+
+    let state_path = paths::data_dir().join("installed.json");
+
+    let content = tokio::fs::read_to_string(&state_path)
+        .await
+        .map_err(|e| format!("Failed to read state: {e}"))?;
+
+    let mut modules: Vec<InstalledModule> =
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse state: {e}"))?;
+
+    let module = modules
+        .iter_mut()
+        .find(|m| m.uuid.to_string() == uuid)
+        .ok_or_else(|| format!("Module not found: {uuid}"))?;
+
+    let waybar_module_name = module.waybar_module_name.clone();
+    let was_enabled = module.enabled;
+    let old_section = module.position.as_ref().map(|p| p.section);
+
+    module.position = Some(crate::domain::ModulePosition {
+        section: new_section,
+        order: None,
+    });
+
+    let new_content =
+        serde_json::to_string_pretty(&modules).map_err(|e| format!("Failed to serialize: {e}"))?;
+
+    tokio::fs::write(&state_path, new_content)
+        .await
+        .map_err(|e| format!("Failed to save state: {e}"))?;
+
+    if was_enabled
+        && let Ok(waybar_content) = waybar_config::load_config().await
+    {
+        let modified = waybar_config::remove_module(&waybar_content, &waybar_module_name)
+            .and_then(|content| waybar_config::add_module(&content, &waybar_module_name, new_section));
+
+        if let Ok(new_waybar_content) = modified {
+            let _ = waybar_config::backup_config().await;
+
+            if waybar_config::save_config(&new_waybar_content).await.is_ok() {
+                let _ = waybar_config::reload_waybar().await;
+            }
+        }
+    }
+
+    tracing::info!(
+        "Changed position of {} from {:?} to {:?}",
+        uuid,
+        old_section,
+        new_section
+    );
     Ok(uuid)
 }
 
@@ -318,15 +636,20 @@ async fn uninstall_module_async(uuid: String) -> Result<String, String> {
     let state_path = paths::data_dir().join("installed.json");
     let install_path = paths::module_install_path(&uuid);
 
-    if install_path.exists() {
-        tokio::fs::remove_dir_all(&install_path)
-            .await
-            .map_err(|e| format!("Failed to remove module files: {e}"))?;
-    }
+    let remove_dir = async {
+        match tokio::fs::remove_dir_all(&install_path).await {
+            Ok(()) => Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(e) => Err(format!("Failed to remove module files: {e}")),
+        }
+    };
 
-    let content = tokio::fs::read_to_string(&state_path)
-        .await
-        .map_err(|e| format!("Failed to read state: {e}"))?;
+    let read_state = tokio::fs::read_to_string(&state_path);
+
+    let (remove_result, read_result) = tokio::join!(remove_dir, read_state);
+
+    remove_result?;
+    let content = read_result.map_err(|e| format!("Failed to read state: {e}"))?;
 
     let mut modules: Vec<InstalledModule> =
         serde_json::from_str(&content).map_err(|e| format!("Failed to parse state: {e}"))?;
@@ -349,14 +672,13 @@ pub fn load_screenshot(url: String) -> Task<Message> {
 }
 
 async fn load_screenshot_async(url: String) -> Result<image::Handle, String> {
-    use std::fs;
     use std::time::SystemTime;
 
     const CACHE_TTL_DAYS: u64 = 7;
 
     let cache_path = paths::screenshot_cache_path(&url);
 
-    if let Ok(metadata) = fs::metadata(&cache_path)
+    if let Ok(metadata) = tokio::fs::metadata(&cache_path).await
         && let Ok(modified) = metadata.modified()
     {
         let age = SystemTime::now()
@@ -365,7 +687,7 @@ async fn load_screenshot_async(url: String) -> Result<image::Handle, String> {
 
         if age < Duration::from_secs(CACHE_TTL_DAYS * 24 * 60 * 60) {
             tracing::debug!("Loading screenshot from cache: {:?}", cache_path);
-            if let Ok(bytes) = fs::read(&cache_path) {
+            if let Ok(bytes) = tokio::fs::read(&cache_path).await {
                 return Ok(image::Handle::from_bytes(bytes));
             }
         }
@@ -373,7 +695,9 @@ async fn load_screenshot_async(url: String) -> Result<image::Handle, String> {
 
     tracing::debug!("Fetching screenshot from {}", url);
 
-    let response = reqwest::get(&url)
+    let response = HTTP_CLIENT
+        .get(&url)
+        .send()
         .await
         .map_err(|e| format!("Failed to fetch screenshot: {e}"))?;
 
@@ -383,9 +707,9 @@ async fn load_screenshot_async(url: String) -> Result<image::Handle, String> {
         .map_err(|e| format!("Failed to read screenshot bytes: {e}"))?;
 
     if let Some(parent) = cache_path.parent() {
-        let _ = fs::create_dir_all(parent);
+        let _ = tokio::fs::create_dir_all(parent).await;
     }
-    let _ = fs::write(&cache_path, &bytes);
+    let _ = tokio::fs::write(&cache_path, &bytes).await;
 
     Ok(image::Handle::from_bytes(bytes.to_vec()))
 }

@@ -181,7 +181,7 @@ pub fn save_preferences(uuid: &str, prefs: &ModulePreferences) -> io::Result<()>
 }
 
 pub fn get_default_preferences(schema: &PreferencesSchema) -> ModulePreferences {
-    let mut prefs = HashMap::new();
+    let mut prefs = HashMap::with_capacity(schema.fields.len());
 
     for field in &schema.fields {
         match field {

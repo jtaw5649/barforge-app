@@ -2,6 +2,7 @@ pub mod omarchy_theme;
 pub mod paths;
 pub mod preferences;
 pub mod settings;
+pub mod waybar_config;
 pub mod waybar_version;
 mod module_service;
 mod registry_service;

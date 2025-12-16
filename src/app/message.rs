@@ -1,7 +1,7 @@
 use iced::widget::image;
 
 use crate::app::state::{CategoryFilter, ConfirmationAction, NotificationKind, Screen, SortField, ViewMode};
-use crate::domain::{InstalledModule, RegistryIndex};
+use crate::domain::{BarSection, InstalledModule, RegistryIndex};
 use crate::services::PreferenceValue;
 use crate::theme::ThemeMode;
 
@@ -19,7 +19,11 @@ pub enum Message {
     InstallModule(String),
 
     ToggleModule { uuid: String, enabled: bool },
+    SetModulePosition { uuid: String, section: BarSection },
+    PositionChanged(Result<String, String>),
     UninstallModule(String),
+    UpdateModule(String),
+    UpdateAllModules,
     OpenPreferences(String),
 
     InstalledSearchChanged(String),
@@ -30,6 +34,8 @@ pub enum Message {
     InstallCompleted(Result<InstalledModule, String>),
     ToggleCompleted(Result<String, (String, String)>),
     UninstallCompleted(Result<String, String>),
+    UpdateCompleted(Result<InstalledModule, String>),
+    UpdateAllCompleted(Result<usize, String>),
 
     ShowNotification(String, NotificationKind),
     DismissNotification,

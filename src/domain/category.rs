@@ -1,9 +1,6 @@
 use std::fmt;
 
-use iced::Color;
 use serde::{Deserialize, Serialize};
-
-use crate::theme::palette;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -42,24 +39,6 @@ impl ModuleCategory {
         }
     }
 
-    pub fn icon(&self) -> &'static str {
-        match self {
-            Self::System => "utilities-system-monitor-symbolic",
-            Self::Hardware => "computer-symbolic",
-            Self::Network => "network-workgroup-symbolic",
-            Self::Audio => "audio-speakers-symbolic",
-            Self::Power => "battery-symbolic",
-            Self::Time => "appointment-symbolic",
-            Self::Workspace => "view-grid-symbolic",
-            Self::Window => "window-symbolic",
-            Self::Tray => "application-x-addon-symbolic",
-            Self::Weather => "weather-clear-symbolic",
-            Self::Productivity => "x-office-calendar-symbolic",
-            Self::Media => "applications-multimedia-symbolic",
-            Self::Custom => "applications-other-symbolic",
-        }
-    }
-
     pub fn all() -> &'static [Self] {
         &[
             Self::System,
@@ -76,42 +55,6 @@ impl ModuleCategory {
             Self::Media,
             Self::Custom,
         ]
-    }
-
-    pub fn badge_color(&self) -> Color {
-        match self {
-            Self::System => palette::BADGE_SYSTEM,
-            Self::Hardware => palette::BADGE_HARDWARE,
-            Self::Network => palette::BADGE_NETWORK,
-            Self::Audio => palette::BADGE_AUDIO,
-            Self::Power => palette::BADGE_POWER,
-            Self::Time => palette::BADGE_TIME,
-            Self::Workspace => palette::BADGE_WORKSPACE,
-            Self::Window => palette::BADGE_WINDOW,
-            Self::Tray => palette::BADGE_TRAY,
-            Self::Weather => palette::BADGE_WEATHER,
-            Self::Productivity => palette::BADGE_PRODUCTIVITY,
-            Self::Media => palette::BADGE_MEDIA,
-            Self::Custom => palette::BADGE_CUSTOM,
-        }
-    }
-
-    pub fn badge_text_color(&self) -> Color {
-        match self {
-            Self::System => palette::BADGE_TEXT_SYSTEM,
-            Self::Hardware => palette::BADGE_TEXT_HARDWARE,
-            Self::Network => palette::BADGE_TEXT_NETWORK,
-            Self::Audio => palette::BADGE_TEXT_AUDIO,
-            Self::Power => palette::BADGE_TEXT_POWER,
-            Self::Time => palette::BADGE_TEXT_TIME,
-            Self::Workspace => palette::BADGE_TEXT_WORKSPACE,
-            Self::Window => palette::BADGE_TEXT_WINDOW,
-            Self::Tray => palette::BADGE_TEXT_TRAY,
-            Self::Weather => palette::BADGE_TEXT_WEATHER,
-            Self::Productivity => palette::BADGE_TEXT_PRODUCTIVITY,
-            Self::Media => palette::BADGE_TEXT_MEDIA,
-            Self::Custom => palette::BADGE_TEXT_CUSTOM,
-        }
     }
 }
 
@@ -153,19 +96,6 @@ mod tests {
         assert_eq!(ModuleCategory::System.display_name(), "System");
         assert_eq!(ModuleCategory::Time.display_name(), "Time & Date");
         assert_eq!(ModuleCategory::Tray.display_name(), "System Tray");
-    }
-
-    #[test]
-    fn test_icon_returns_symbolic_icon() {
-        for category in ModuleCategory::all() {
-            let icon = category.icon();
-            assert!(
-                icon.ends_with("-symbolic"),
-                "Icon for {:?} should be symbolic: {}",
-                category,
-                icon
-            );
-        }
     }
 
     #[test]

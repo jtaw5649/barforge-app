@@ -11,35 +11,8 @@ use crate::theme::{
     RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS,
 };
 
-fn format_relative_time(dt: &chrono::DateTime<chrono::Utc>) -> String {
-    let now = chrono::Utc::now();
-    let duration = now.signed_duration_since(*dt);
-
-    if duration.num_days() > 365 {
-        format!("{}y ago", duration.num_days() / 365)
-    } else if duration.num_days() > 30 {
-        format!("{}mo ago", duration.num_days() / 30)
-    } else if duration.num_days() > 0 {
-        format!("{}d ago", duration.num_days())
-    } else if duration.num_hours() > 0 {
-        format!("{}h ago", duration.num_hours())
-    } else {
-        "Just now".to_string()
-    }
-}
-
-fn rating_stars(rating: f32) -> String {
-    let full_stars = rating.floor() as usize;
-    let half_star = (rating - rating.floor()) >= 0.5;
-    let empty_stars = 5 - full_stars - if half_star { 1 } else { 0 };
-
-    let mut stars = "★".repeat(full_stars);
-    if half_star {
-        stars.push('⯪');
-    }
-    stars.push_str(&"☆".repeat(empty_stars));
-    stars
-}
+use super::category_style;
+use super::{format_relative_time, rating_stars_text};
 
 pub fn module_card(
     module: &RegistryModule,
@@ -60,8 +33,8 @@ pub fn module_card(
     let compatibility = CompatibilityStatus::from_versions(&module.waybar_versions, waybar_version);
 
     let theme_copy = *theme;
-    let badge_bg = category.badge_color();
-    let badge_text = category.badge_text_color();
+    let badge_bg = category_style::badge_color(category);
+    let badge_text = category_style::badge_text_color(category);
 
     let compat_color = match compatibility {
         CompatibilityStatus::Compatible => theme.success,
@@ -127,7 +100,7 @@ pub fn module_card(
 
     let rating_row: Element<Message> = if let Some(r) = rating {
         row![
-            text(rating_stars(r)).size(FONT_XS).color(theme.warning),
+            text(rating_stars_text(r)).size(FONT_XS).color(theme.warning),
             text(format!("{:.1}", r)).size(FONT_XS).color(theme.text_faint),
         ]
         .spacing(SPACE_XS)
