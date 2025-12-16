@@ -6,12 +6,20 @@ use flate2::read::GzDecoder;
 use iced::widget::image;
 use iced::{Subscription, Task};
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use once_cell::sync::Lazy;
 use tar::Archive;
 use tokio::sync::mpsc as async_mpsc;
 use tokio::time::timeout;
 
 use crate::app::Message;
 use crate::domain::{BarSection, InstalledModule, ModuleVersion, RegistryIndex};
+
+static DEFAULT_VERSION: Lazy<ModuleVersion> = Lazy::new(|| {
+    ModuleVersion::try_from("1.0.0").unwrap_or_else(|_| {
+        unreachable!("1.0.0 is always valid semver")
+    })
+});
+use crate::security::validate_extraction_path;
 use crate::services::paths::{self, HTTP_CLIENT, REGISTRY_URL};
 
 pub fn initial_load() -> Task<Message> {
@@ -88,9 +96,7 @@ async fn install_module_async(
 
     let has_preferences = install_path.join("preferences.schema.json").exists();
 
-    let version = version.unwrap_or_else(|| {
-        ModuleVersion::try_from("1.0.0").expect("valid default version")
-    });
+    let version = version.unwrap_or_else(|| DEFAULT_VERSION.clone());
 
     let waybar_module_name = format!("custom/{}", name.replace(' ', "-").to_lowercase());
 
@@ -314,7 +320,8 @@ fn extract_tarball_sync(bytes: &[u8], install_path: &Path) -> Result<(), String>
         }
 
         let relative_path: PathBuf = components[1..].iter().collect();
-        let dest_path = install_path.join(&relative_path);
+        let dest_path = validate_extraction_path(install_path, &relative_path)
+            .map_err(|e| format!("Path traversal blocked: {e}"))?;
 
         if entry.header().entry_type().is_dir() {
             std::fs::create_dir_all(&dest_path)

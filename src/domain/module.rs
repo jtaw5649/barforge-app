@@ -11,6 +11,10 @@ pub enum ModuleUuidError {
     EmptyName,
     #[error("empty namespace in UUID")]
     EmptyNamespace,
+    #[error("invalid character in UUID (path separator or null)")]
+    InvalidCharacter,
+    #[error("path traversal attempt detected in UUID")]
+    PathTraversalAttempt,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -65,6 +69,14 @@ impl TryFrom<&str> for ModuleUuid {
 
         if namespace.is_empty() {
             return Err(ModuleUuidError::EmptyNamespace);
+        }
+
+        if name == ".." || namespace == ".." {
+            return Err(ModuleUuidError::PathTraversalAttempt);
+        }
+
+        if value.contains('/') || value.contains('\\') || value.contains('\0') {
+            return Err(ModuleUuidError::InvalidCharacter);
         }
 
         Ok(Self {
@@ -185,6 +197,36 @@ mod tests {
             let uuid = ModuleUuid::try_from("test@ns").unwrap();
             let cloned = uuid.clone();
             assert_eq!(uuid, cloned);
+        }
+
+        #[test]
+        fn test_module_uuid_rejects_forward_slash() {
+            let result = ModuleUuid::try_from("test/../escape@ns");
+            assert!(matches!(result, Err(ModuleUuidError::InvalidCharacter)));
+        }
+
+        #[test]
+        fn test_module_uuid_rejects_backslash() {
+            let result = ModuleUuid::try_from("test\\escape@ns");
+            assert!(matches!(result, Err(ModuleUuidError::InvalidCharacter)));
+        }
+
+        #[test]
+        fn test_module_uuid_rejects_null_byte() {
+            let result = ModuleUuid::try_from("test\0escape@ns");
+            assert!(matches!(result, Err(ModuleUuidError::InvalidCharacter)));
+        }
+
+        #[test]
+        fn test_module_uuid_rejects_parent_dir_reference() {
+            let result = ModuleUuid::try_from("..@ns");
+            assert!(matches!(result, Err(ModuleUuidError::PathTraversalAttempt)));
+        }
+
+        #[test]
+        fn test_module_uuid_namespace_rejects_path_chars() {
+            let result = ModuleUuid::try_from("test@ns/evil");
+            assert!(matches!(result, Err(ModuleUuidError::InvalidCharacter)));
         }
     }
 

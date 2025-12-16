@@ -328,6 +328,9 @@ impl App {
 
     pub fn set_theme_mode(&mut self, mode: ThemeMode) {
         self.theme_mode = mode;
+        if mode == ThemeMode::Omarchy && self.omarchy_palette.is_none() {
+            self.omarchy_palette = load_omarchy_palette();
+        }
         self.update_theme();
     }
 
@@ -420,7 +423,7 @@ impl App {
     pub fn sync_registry_versions(&mut self, registry: &RegistryIndex) {
         for installed in &mut self.installed_modules {
             let uuid_str = installed.uuid.to_string();
-            if let Some(registry_module) = registry.modules.iter().find(|m| m.uuid.to_string() == uuid_str) {
+            if let Some(registry_module) = registry.find_by_uuid(&uuid_str) {
                 installed.registry_version = registry_module.version.clone();
             }
         }

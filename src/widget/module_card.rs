@@ -7,7 +7,7 @@ use crate::domain::RegistryModule;
 use crate::icons::Icon;
 use crate::theme::{
     shadow_md, shadow_hover, AppTheme, FONT_LG, FONT_SM, FONT_XS, ICON_SM, ICON_XS, RADIUS_LG,
-    RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS,
+    RADIUS_SM, SPACE_2XS, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS,
 };
 
 use super::category_style;
@@ -183,5 +183,3 @@ pub fn module_card(
         .width(Length::Fixed(width))
         .into()
 }
-
-const SPACE_2XS: f32 = 2.0;

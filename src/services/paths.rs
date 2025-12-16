@@ -12,7 +12,10 @@ pub static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| {
         .connect_timeout(Duration::from_secs(10))
         .pool_max_idle_per_host(4)
         .build()
-        .expect("Failed to create HTTP client")
+        .unwrap_or_else(|e| {
+            tracing::error!("Failed to create configured HTTP client: {e}, using default");
+            Client::new()
+        })
 });
 
 static HOME_DIR: Lazy<PathBuf> = Lazy::new(|| dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")));

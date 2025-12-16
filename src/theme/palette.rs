@@ -190,3 +190,116 @@ pub fn lighten(color: Color, factor: f32) -> Color {
 pub fn with_alpha(color: Color, alpha: f32) -> Color {
     Color::from_rgba(color.r, color.g, color.b, alpha.clamp(0.0, 1.0))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn approx_eq(a: f32, b: f32) -> bool {
+        (a - b).abs() < 0.001
+    }
+
+    mod darken_tests {
+        use super::*;
+
+        #[test]
+        fn test_darken_by_zero_unchanged() {
+            let color = Color::from_rgb(0.5, 0.5, 0.5);
+            let result = darken(color, 0.0);
+            assert!(approx_eq(result.r, 0.5));
+            assert!(approx_eq(result.g, 0.5));
+            assert!(approx_eq(result.b, 0.5));
+        }
+
+        #[test]
+        fn test_darken_by_one_to_black() {
+            let color = Color::from_rgb(0.5, 0.5, 0.5);
+            let result = darken(color, 1.0);
+            assert!(approx_eq(result.r, 0.0));
+            assert!(approx_eq(result.g, 0.0));
+            assert!(approx_eq(result.b, 0.0));
+        }
+
+        #[test]
+        fn test_darken_by_half() {
+            let color = Color::from_rgb(1.0, 1.0, 1.0);
+            let result = darken(color, 0.5);
+            assert!(approx_eq(result.r, 0.5));
+            assert!(approx_eq(result.g, 0.5));
+            assert!(approx_eq(result.b, 0.5));
+        }
+
+        #[test]
+        fn test_darken_preserves_alpha() {
+            let color = Color::from_rgba(0.5, 0.5, 0.5, 0.8);
+            let result = darken(color, 0.5);
+            assert!(approx_eq(result.a, 0.8));
+        }
+    }
+
+    mod lighten_tests {
+        use super::*;
+
+        #[test]
+        fn test_lighten_by_zero_unchanged() {
+            let color = Color::from_rgb(0.5, 0.5, 0.5);
+            let result = lighten(color, 0.0);
+            assert!(approx_eq(result.r, 0.5));
+            assert!(approx_eq(result.g, 0.5));
+            assert!(approx_eq(result.b, 0.5));
+        }
+
+        #[test]
+        fn test_lighten_by_one_to_white() {
+            let color = Color::from_rgb(0.5, 0.5, 0.5);
+            let result = lighten(color, 1.0);
+            assert!(approx_eq(result.r, 1.0));
+            assert!(approx_eq(result.g, 1.0));
+            assert!(approx_eq(result.b, 1.0));
+        }
+
+        #[test]
+        fn test_lighten_black_by_half() {
+            let color = Color::from_rgb(0.0, 0.0, 0.0);
+            let result = lighten(color, 0.5);
+            assert!(approx_eq(result.r, 0.5));
+            assert!(approx_eq(result.g, 0.5));
+            assert!(approx_eq(result.b, 0.5));
+        }
+
+        #[test]
+        fn test_lighten_preserves_alpha() {
+            let color = Color::from_rgba(0.5, 0.5, 0.5, 0.3);
+            let result = lighten(color, 0.5);
+            assert!(approx_eq(result.a, 0.3));
+        }
+    }
+
+    mod with_alpha_tests {
+        use super::*;
+
+        #[test]
+        fn test_set_alpha() {
+            let color = Color::from_rgb(1.0, 0.5, 0.0);
+            let result = with_alpha(color, 0.5);
+            assert!(approx_eq(result.r, 1.0));
+            assert!(approx_eq(result.g, 0.5));
+            assert!(approx_eq(result.b, 0.0));
+            assert!(approx_eq(result.a, 0.5));
+        }
+
+        #[test]
+        fn test_alpha_clamped_high() {
+            let color = Color::from_rgb(1.0, 0.5, 0.0);
+            let result = with_alpha(color, 2.0);
+            assert!(approx_eq(result.a, 1.0));
+        }
+
+        #[test]
+        fn test_alpha_clamped_low() {
+            let color = Color::from_rgb(1.0, 0.5, 0.0);
+            let result = with_alpha(color, -1.0);
+            assert!(approx_eq(result.a, 0.0));
+        }
+    }
+}

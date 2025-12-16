@@ -114,6 +114,11 @@ impl RegistryIndex {
             .filter(|m| m.category == category)
             .collect()
     }
+
+
+    pub fn find_by_uuid(&self, uuid: &str) -> Option<&RegistryModule> {
+        self.modules.iter().find(|m| m.uuid.to_string() == uuid)
+    }
 }
 
 #[cfg(test)]
@@ -340,6 +345,22 @@ mod tests {
             let results = index.by_category(ModuleCategory::Hardware);
             assert_eq!(results.len(), 1);
             assert_eq!(results[0].name, "cpu-monitor");
+        }
+
+
+        #[test]
+        fn test_find_by_uuid_existing() {
+            let index = create_test_index();
+            let result = index.find_by_uuid("weather-wttr@test");
+            assert!(result.is_some());
+            assert_eq!(result.unwrap().name, "weather-wttr");
+        }
+
+        #[test]
+        fn test_find_by_uuid_not_found() {
+            let index = create_test_index();
+            let result = index.find_by_uuid("nonexistent@test");
+            assert!(result.is_none());
         }
 
         #[test]

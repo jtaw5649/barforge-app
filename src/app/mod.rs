@@ -1,3 +1,4 @@
+pub mod handlers;
 pub mod message;
 pub mod state;
 
@@ -8,8 +9,10 @@ use iced::{Alignment, Element, Length, Task, Theme};
 use iced_aw::Wrap;
 
 use crate::icons::Icon;
+use crate::security::validate_web_url;
+use crate::services::is_omarchy_available;
 use crate::tasks;
-use crate::theme::{CARD_WIDTH, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_XS};
+use crate::theme::{darken, menu_style, pick_list_style, PickListColors, CARD_WIDTH, RADIUS_MD, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_XS};
 
 use crate::tray::TrayEvent;
 use crate::widget::{confirmation_dialog, empty_state, empty_state_dynamic, empty_state_with_action, module_card, module_detail_screen, module_row, module_table, notification_toast, preferences_modal, settings_screen, sidebar, skeleton_card};
@@ -28,65 +31,21 @@ impl App {
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::Navigate(screen) => {
-                if let Screen::ModuleDetail(ref uuid) = screen {
-                    self.module_detail.screenshot = state::ScreenshotState::Loading;
-                    self.module_detail.installing = false;
-                    self.screen = screen.clone();
+            Message::Navigate(screen) => handlers::handle_navigate(self, screen),
 
-                    if let Some(registry) = &self.registry
-                        && let Some(module) = registry.modules.iter().find(|m| m.uuid.to_string() == *uuid)
-                        && let Some(screenshot_url) = &module.screenshot
-                    {
-                        return tasks::load_screenshot(screenshot_url.clone());
-                    }
-                    self.module_detail.screenshot = state::ScreenshotState::NotLoaded;
-                    return Task::none();
-                }
-                self.screen = screen;
-                Task::none()
-            }
+            Message::NavigateBack => handlers::handle_navigate_back(self),
 
-            Message::NavigateBack => {
-                self.screen = Screen::Browse;
-                self.module_detail.screenshot = state::ScreenshotState::NotLoaded;
-                self.module_detail.installing = false;
-                Task::none()
-            }
+            Message::SearchChanged(query) => handlers::handle_search_changed(self, query),
 
-            Message::SearchChanged(query) => {
-                self.browse.pending_search = Some(query);
-                self.browse.search_debounce_start = Some(std::time::Instant::now());
-                Task::none()
-            }
+            Message::CategorySelected(filter) => handlers::handle_category_selected(self, filter),
 
-            Message::CategorySelected(filter) => {
-                self.browse.selected_category = filter;
-                Task::none()
-            }
+            Message::SetSortField(field) => handlers::handle_set_sort_field(self, field),
 
-            Message::SetSortField(field) => {
-                self.browse.sort_field = field;
-                self.save_settings();
-                Task::none()
-            }
+            Message::ToggleSortOrder => handlers::handle_toggle_sort_order(self),
 
-            Message::ToggleSortOrder => {
-                self.browse.sort_order = self.browse.sort_order.toggle();
-                self.save_settings();
-                Task::none()
-            }
+            Message::SetViewMode(mode) => handlers::handle_set_view_mode(self, mode),
 
-            Message::SetViewMode(mode) => {
-                self.browse.view_mode = mode;
-                self.save_settings();
-                Task::none()
-            }
-
-            Message::ToggleVerifiedOnly => {
-                self.browse.verified_only = !self.browse.verified_only;
-                Task::none()
-            }
+            Message::ToggleVerifiedOnly => handlers::handle_toggle_verified_only(self),
 
             Message::ModuleClicked(_uuid) => Task::none(),
 
@@ -101,7 +60,7 @@ impl App {
                 }
 
                 if let Some(registry) = &self.registry
-                    && let Some(module) = registry.modules.iter().find(|m| m.uuid.to_string() == uuid)
+                    && let Some(module) = registry.find_by_uuid(&uuid)
                 {
                     return tasks::install_module(
                         uuid,
@@ -180,138 +139,32 @@ impl App {
             }
 
             Message::InstalledSearchChanged(query) => {
-                self.installed.pending_search = Some(query);
-                self.installed.search_debounce_start = Some(std::time::Instant::now());
-                Task::none()
+                handlers::handle_installed_search_changed(self, query)
             }
 
-            Message::ClearInstalledSearch => {
-                self.installed.search_query.clear();
-                self.installed.pending_search = None;
-                self.installed.search_debounce_start = None;
-                Task::none()
-            }
+            Message::ClearInstalledSearch => handlers::handle_clear_installed_search(self),
 
             Message::RefreshRegistry => {
                 self.browse.refreshing = true;
                 tasks::refresh_registry()
             }
 
-            Message::RegistryLoaded(result) => {
-                match result {
-                    Ok(index) => {
-                        self.sync_registry_versions(&index);
-                        self.registry = Some(index);
-                        self.loading = LoadingState::Idle;
-                        self.browse.last_refreshed = Some(std::time::Instant::now());
-                    }
-                    Err(e) => {
-                        self.loading = LoadingState::Failed(e);
-                    }
-                }
-                Task::none()
-            }
+            Message::RegistryLoaded(result) => handlers::handle_registry_loaded(self, result),
 
-            Message::RegistryRefreshed(result) => {
-                self.browse.refreshing = false;
-                match result {
-                    Ok(index) => {
-                        let count = index.modules.len();
-                        self.sync_registry_versions(&index);
-                        self.registry = Some(index);
-                        self.browse.last_refreshed = Some(std::time::Instant::now());
-                        self.push_notification(
-                            format!("Registry refreshed ({count} modules)"),
-                            state::NotificationKind::Success,
-                        );
-                    }
-                    Err(e) => {
-                        self.push_notification(
-                            format!("Failed to refresh registry: {e}"),
-                            state::NotificationKind::Error,
-                        );
-                    }
-                }
-                Task::none()
-            }
+            Message::RegistryRefreshed(result) => handlers::handle_registry_refreshed(self, result),
 
-            Message::InstalledLoaded(result) => {
-                match result {
-                    Ok(modules) => {
-                        self.installed_uuids =
-                            modules.iter().map(|m| m.uuid.to_string()).collect();
-                        self.installed_modules = modules;
-                    }
-                    Err(e) => {
-                        self.push_notification(
-                            format!("Failed to load installed modules: {e}"),
-                            state::NotificationKind::Error,
-                        );
-                    }
-                }
-                Task::none()
-            }
+            Message::InstalledLoaded(result) => handlers::handle_installed_loaded(self, result),
 
-            Message::InstallCompleted(result) => {
-                self.module_detail.installing = false;
-                match result {
-                    Ok(module) => {
-                        self.installed_uuids.insert(module.uuid.to_string());
-                        self.installed_modules.push(module);
-                        self.push_notification(
-                            "Module installed successfully".to_string(),
-                            state::NotificationKind::Success,
-                        );
-                    }
-                    Err(e) => {
-                        self.push_notification(
-                            format!("Installation failed: {e}"),
-                            state::NotificationKind::Error,
-                        );
-                    }
-                }
-                Task::none()
-            }
+            Message::InstallCompleted(result) => handlers::handle_install_completed(self, result),
 
-            Message::ToggleCompleted(result) => {
-                match result {
-                    Ok(uuid) => {
-                        self.installed.toggling.remove(&uuid);
-                        if let Some(m) = self
-                            .installed_modules
-                            .iter_mut()
-                            .find(|m| m.uuid.to_string() == uuid)
-                        {
-                            m.enabled = !m.enabled;
-                        }
-                    }
-                    Err((uuid, e)) => {
-                        self.installed.toggling.remove(&uuid);
-                        self.push_notification(format!("Toggle failed: {e}"), state::NotificationKind::Error);
-                    }
-                }
-                Task::none()
-            }
+            Message::ToggleCompleted(result) => handlers::handle_toggle_completed(self, result),
 
-            Message::UninstallCompleted(result) => {
-                match result {
-                    Ok(uuid) => {
-                        self.installed.uninstalling.remove(&uuid);
-                        self.installed_uuids.remove(&uuid);
-                        self.installed_modules.retain(|m| m.uuid.to_string() != uuid);
-                        self.push_notification("Module uninstalled".to_string(), state::NotificationKind::Success);
-                    }
-                    Err(e) => {
-                        self.push_notification(format!("Uninstall failed: {e}"), state::NotificationKind::Error);
-                    }
-                }
-                Task::none()
-            }
+            Message::UninstallCompleted(result) => handlers::handle_uninstall_completed(self, result),
 
             Message::UpdateModule(uuid) => {
                 if let Some(_installed) = self.installed_modules.iter().find(|m| m.uuid.to_string() == uuid)
                     && let Some(registry) = &self.registry
-                    && let Some(registry_module) = registry.modules.iter().find(|m| m.uuid.to_string() == uuid)
+                    && let Some(registry_module) = registry.find_by_uuid(&uuid)
                     && let Some(new_version) = &registry_module.version
                 {
                     self.installed.updating.insert(uuid.clone());
@@ -474,13 +327,7 @@ impl App {
                 Task::none()
             }
 
-            Message::ScreenshotLoaded(result) => {
-                self.module_detail.screenshot = match result {
-                    Ok(handle) => state::ScreenshotState::Loaded(handle),
-                    Err(_) => state::ScreenshotState::Failed,
-                };
-                Task::none()
-            }
+            Message::ScreenshotLoaded(result) => handlers::handle_screenshot_loaded(self, result),
 
             Message::DetailInstallModule => {
                 if let Screen::ModuleDetail(ref uuid) = self.screen {
@@ -492,7 +339,17 @@ impl App {
             }
 
             Message::OpenRepoUrl(url) => {
-                let _ = open::that(&url);
+                match validate_web_url(&url) {
+                    Ok(()) => {
+                        let _ = open::that(&url);
+                    }
+                    Err(e) => {
+                        self.push_notification(
+                            format!("Cannot open URL: {e}"),
+                            state::NotificationKind::Error,
+                        );
+                    }
+                }
                 Task::none()
             }
 
@@ -653,7 +510,7 @@ impl App {
             self.update_count(),
             &self.theme,
             self.theme_mode,
-            self.omarchy_palette.is_some(),
+            is_omarchy_available(),
         );
         let content = match &self.screen {
             Screen::Browse => self.view_browse(),
@@ -717,7 +574,7 @@ impl App {
 
     fn view_module_detail(&self, uuid: &str) -> Element<'_, Message> {
         if let Some(registry) = &self.registry
-            && let Some(module) = registry.modules.iter().find(|m| m.uuid.to_string() == uuid)
+            && let Some(module) = registry.find_by_uuid(uuid)
         {
             let is_installed = self.installed_uuids.contains(uuid);
             let installed_at = self
@@ -783,57 +640,25 @@ impl App {
             ..Default::default()
         });
 
-        let picker_surface = self.theme.surface;
-        let picker_text = self.theme.text;
-        let picker_text_secondary = self.theme.text_secondary;
-        let picker_border = self.theme.border;
-        let picker_primary = self.theme.primary;
-        let menu_surface = self.theme.surface;
-        let menu_text = self.theme.text;
-        let menu_selected_bg = self.theme.primary;
-        let menu_border = self.theme.border;
+        let picker_colors = PickListColors {
+            surface: self.theme.surface,
+            text: self.theme.text,
+            text_muted: self.theme.text_secondary,
+            border: self.theme.border,
+            primary: self.theme.primary,
+            menu_surface: self.theme.surface,
+            menu_border: self.theme.border,
+            menu_text: self.theme.text,
+            menu_selected_bg: self.theme.primary,
+        };
         let category_picker = pick_list(
             CategoryFilter::all(),
             Some(self.browse.selected_category),
             Message::CategorySelected,
         )
         .padding(SPACING_SM)
-        .style(move |_theme, status| {
-            let border_color = match status {
-                iced::widget::pick_list::Status::Active => picker_border,
-                iced::widget::pick_list::Status::Hovered
-                | iced::widget::pick_list::Status::Opened { .. } => picker_primary,
-            };
-            iced::widget::pick_list::Style {
-                text_color: picker_text,
-                placeholder_color: picker_text_secondary,
-                handle_color: picker_text_secondary,
-                background: iced::Background::Color(picker_surface),
-                border: iced::Border {
-                    color: border_color,
-                    width: 1.0,
-                    radius: crate::theme::RADIUS_MD.into(),
-                },
-            }
-        })
-        .menu_style(move |_theme| {
-            iced::overlay::menu::Style {
-                background: iced::Background::Color(menu_surface),
-                border: iced::Border {
-                    color: menu_border,
-                    width: 1.0,
-                    radius: crate::theme::RADIUS_MD.into(),
-                },
-                text_color: menu_text,
-                selected_text_color: iced::Color::WHITE,
-                selected_background: iced::Background::Color(menu_selected_bg),
-                shadow: iced::Shadow {
-                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.3),
-                    offset: iced::Vector::new(0.0, 4.0),
-                    blur_radius: 8.0,
-                },
-            }
-        });
+        .style(pick_list_style(picker_colors, RADIUS_MD))
+        .menu_style(menu_style(picker_colors, RADIUS_MD, 0.3, 8.0));
 
         let sort_picker = pick_list(
             SortField::all(),
@@ -841,42 +666,8 @@ impl App {
             Message::SetSortField,
         )
         .padding(SPACING_SM)
-        .style(move |_theme, status| {
-            let border_color = match status {
-                iced::widget::pick_list::Status::Active => picker_border,
-                iced::widget::pick_list::Status::Hovered
-                | iced::widget::pick_list::Status::Opened { .. } => picker_primary,
-            };
-            iced::widget::pick_list::Style {
-                text_color: picker_text,
-                placeholder_color: picker_text_secondary,
-                handle_color: picker_text_secondary,
-                background: iced::Background::Color(picker_surface),
-                border: iced::Border {
-                    color: border_color,
-                    width: 1.0,
-                    radius: crate::theme::RADIUS_MD.into(),
-                },
-            }
-        })
-        .menu_style(move |_theme| {
-            iced::overlay::menu::Style {
-                background: iced::Background::Color(menu_surface),
-                border: iced::Border {
-                    color: menu_border,
-                    width: 1.0,
-                    radius: crate::theme::RADIUS_MD.into(),
-                },
-                text_color: menu_text,
-                selected_text_color: iced::Color::WHITE,
-                selected_background: iced::Background::Color(menu_selected_bg),
-                shadow: iced::Shadow {
-                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.3),
-                    offset: iced::Vector::new(0.0, 4.0),
-                    blur_radius: 8.0,
-                },
-            }
-        });
+        .style(pick_list_style(picker_colors, RADIUS_MD))
+        .menu_style(menu_style(picker_colors, RADIUS_MD, 0.3, 8.0));
 
         let sort_icon = match self.browse.sort_order {
             SortOrder::Ascending => "↑",
@@ -1273,12 +1064,7 @@ impl App {
 
         let update_all_btn = if update_count > 0 && !is_updating_all {
             let primary = self.theme.primary;
-            let primary_hover = iced::Color {
-                r: (primary.r * 0.9).min(1.0),
-                g: (primary.g * 0.9).min(1.0),
-                b: (primary.b * 0.9).min(1.0),
-                a: primary.a,
-            };
+            let primary_hover = darken(primary, 0.1);
             button(
                 row![
                     Icon::Updates.svg(14.0),
@@ -1379,12 +1165,7 @@ impl App {
 
                     let theme = self.theme;
                     let primary = theme.primary;
-                    let primary_hover = iced::Color {
-                        r: (primary.r * 0.9).min(1.0),
-                        g: (primary.g * 0.9).min(1.0),
-                        b: (primary.b * 0.9).min(1.0),
-                        a: primary.a,
-                    };
+                    let primary_hover = darken(primary, 0.1);
 
                     let update_btn: Element<Message> = if is_updating {
                         let surface = theme.surface;

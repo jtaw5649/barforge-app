@@ -5,8 +5,8 @@ use crate::app::message::Message;
 use crate::app::state::ConfirmationAction;
 use crate::domain::{BarSection, InstalledModule};
 use crate::theme::{
-    button as btn_style, shadow_sm, AppTheme, FONT_2XS, FONT_SM, FONT_XS, RADIUS_MD, RADIUS_SM,
-    SPACE_LG, SPACE_MD, SPACE_SM,
+    button as btn_style, menu_style, pick_list_style, shadow_sm, AppTheme, PickListColors,
+    FONT_2XS, FONT_SM, FONT_XS, RADIUS_MD, RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM,
 };
 
 pub fn module_row(
@@ -50,15 +50,17 @@ pub fn module_row(
             .into()
     };
 
-    let picker_surface = theme.bg_surface;
-    let picker_text = theme.text_normal;
-    let picker_text_muted = theme.text_muted;
-    let picker_border = theme.border_subtle;
-    let picker_primary = theme.primary;
-    let menu_surface = theme.bg_surface;
-    let menu_text = theme.text_normal;
-    let menu_selected = theme.primary;
-    let menu_border = theme.border_subtle;
+    let picker_colors = PickListColors {
+        surface: theme.bg_surface,
+        text: theme.text_normal,
+        text_muted: theme.text_muted,
+        border: theme.border_subtle,
+        primary: theme.primary,
+        menu_surface: theme.bg_surface,
+        menu_border: theme.border_subtle,
+        menu_text: theme.text_normal,
+        menu_selected_bg: theme.primary,
+    };
 
     let position_picker = pick_list(
         BarSection::all(),
@@ -70,40 +72,8 @@ pub fn module_row(
     )
     .padding([SPACE_SM / 2.0, SPACE_SM])
     .text_size(FONT_XS)
-    .style(move |_theme, status| {
-        let border_color = match status {
-            iced::widget::pick_list::Status::Active => picker_border,
-            iced::widget::pick_list::Status::Hovered
-            | iced::widget::pick_list::Status::Opened { .. } => picker_primary,
-        };
-        iced::widget::pick_list::Style {
-            text_color: picker_text,
-            placeholder_color: picker_text_muted,
-            handle_color: picker_text_muted,
-            background: iced::Background::Color(picker_surface),
-            border: Border {
-                color: border_color,
-                width: 1.0,
-                radius: RADIUS_SM.into(),
-            },
-        }
-    })
-    .menu_style(move |_theme| iced::overlay::menu::Style {
-        background: iced::Background::Color(menu_surface),
-        border: Border {
-            color: menu_border,
-            width: 1.0,
-            radius: RADIUS_SM.into(),
-        },
-        text_color: menu_text,
-        selected_text_color: iced::Color::WHITE,
-        selected_background: iced::Background::Color(menu_selected),
-        shadow: iced::Shadow {
-            color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.2),
-            offset: iced::Vector::new(0.0, 2.0),
-            blur_radius: 4.0,
-        },
-    });
+    .style(pick_list_style(picker_colors, RADIUS_SM))
+    .menu_style(menu_style(picker_colors, RADIUS_SM, 0.2, 4.0));
 
     let prefs_widget: Element<Message> = if has_preferences {
         button(text("\u{2699}").size(FONT_SM))

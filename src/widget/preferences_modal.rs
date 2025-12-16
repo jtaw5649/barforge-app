@@ -4,8 +4,9 @@ use iced::{Alignment, Background, Border, Element, Length};
 use crate::app::message::Message;
 use crate::services::{ModulePreferences, PreferenceField, PreferenceValue, PreferencesSchema, SelectOption};
 use crate::theme::{
-    button as btn_style, AppTheme, FONT_LG, FONT_MD, FONT_SM, FONT_XS, RADIUS_LG, RADIUS_MD,
-    RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XL, SPACE_XS,
+    button as btn_style, menu_style, pick_list_style, AppTheme, PickListColors, FONT_LG, FONT_MD,
+    FONT_SM, FONT_XS, RADIUS_LG, RADIUS_MD, RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XL,
+    SPACE_XS,
 };
 
 pub fn preferences_modal<'a>(
@@ -237,6 +238,17 @@ fn render_field<'a>(
                 .cloned();
 
             let key_owned = key.clone();
+            let picker_colors = PickListColors {
+                surface: theme_copy.bg_elevated,
+                text: theme_copy.text_normal,
+                text_muted: theme_copy.text_faint,
+                border: theme_copy.border,
+                primary: theme_copy.primary,
+                menu_surface: theme_copy.bg_surface,
+                menu_border: theme_copy.border,
+                menu_text: theme_copy.text_normal,
+                menu_selected_bg: theme_copy.primary,
+            };
             let picker = pick_list(
                 options.clone(),
                 selected,
@@ -250,29 +262,8 @@ fn render_field<'a>(
             )
             .padding(SPACE_SM)
             .width(Length::Fill)
-            .style(move |_, _| iced::widget::pick_list::Style {
-                text_color: theme_copy.text_normal,
-                placeholder_color: theme_copy.text_faint,
-                handle_color: theme_copy.text_muted,
-                background: Background::Color(theme_copy.bg_elevated),
-                border: Border {
-                    color: theme_copy.border,
-                    width: 1.0,
-                    radius: RADIUS_SM.into(),
-                },
-            })
-            .menu_style(move |_| iced::overlay::menu::Style {
-                background: Background::Color(theme_copy.bg_surface),
-                border: Border {
-                    color: theme_copy.border,
-                    width: 1.0,
-                    radius: RADIUS_SM.into(),
-                },
-                text_color: theme_copy.text_normal,
-                selected_text_color: iced::Color::WHITE,
-                selected_background: Background::Color(theme_copy.primary),
-                shadow: iced::Shadow::default(),
-            });
+            .style(pick_list_style(picker_colors, RADIUS_SM))
+            .menu_style(menu_style(picker_colors, RADIUS_SM, 0.0, 0.0));
 
             let mut col = column![
                 text(label).size(FONT_MD).color(theme.text_normal),
