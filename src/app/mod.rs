@@ -341,7 +341,9 @@ impl App {
             Message::OpenRepoUrl(url) => {
                 match validate_web_url(&url) {
                     Ok(()) => {
-                        let _ = open::that(&url);
+                        if let Err(e) = open::that(&url) {
+                            tracing::warn!("Failed to open URL in browser: {e}");
+                        }
                     }
                     Err(e) => {
                         self.push_notification(
@@ -458,7 +460,13 @@ impl App {
             Message::PreferenceChanged(uuid, key, value) => {
                 if self.preferences.open_for.as_ref() == Some(&uuid) {
                     self.preferences.values.insert(key, value);
-                    let _ = crate::services::save_preferences(&uuid, &self.preferences.values);
+                    if let Err(e) = crate::services::save_preferences(&uuid, &self.preferences.values) {
+                        tracing::warn!("Failed to save preferences: {e}");
+                        self.push_notification(
+                            "Failed to save preferences".to_string(),
+                            state::NotificationKind::Error,
+                        );
+                    }
                 }
                 Task::none()
             }
@@ -474,11 +482,21 @@ impl App {
                 if let Some(schema) = &self.preferences.schema {
                     let defaults = crate::services::preferences::get_default_preferences(schema);
                     self.preferences.values = defaults.clone();
-                    let _ = crate::services::save_preferences(&uuid, &defaults);
-                    self.push_notification(
-                        "Preferences reset to defaults".to_string(),
-                        state::NotificationKind::Success,
-                    );
+                    match crate::services::save_preferences(&uuid, &defaults) {
+                        Ok(()) => {
+                            self.push_notification(
+                                "Preferences reset to defaults".to_string(),
+                                state::NotificationKind::Success,
+                            );
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to save reset preferences: {e}");
+                            self.push_notification(
+                                "Failed to save preferences".to_string(),
+                                state::NotificationKind::Error,
+                            );
+                        }
+                    }
                 }
                 Task::none()
             }

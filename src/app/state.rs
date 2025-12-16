@@ -448,7 +448,9 @@ impl App {
             sort_order: self.browse.sort_order,
             tray_enabled: self.tray_enabled,
         };
-        let _ = crate::services::save_settings(&settings);
+        if let Err(e) = crate::services::save_settings(&settings) {
+            tracing::warn!("Failed to save user settings: {e}");
+        }
     }
 
     pub fn poll_tray_events(&self) -> Option<TrayEvent> {
