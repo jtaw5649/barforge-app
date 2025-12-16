@@ -127,6 +127,8 @@ pub struct BrowseState {
     pub sort_order: SortOrder,
     pub view_mode: ViewMode,
     pub verified_only: bool,
+    pub refreshing: bool,
+    pub last_refreshed: Option<std::time::Instant>,
 }
 
 #[derive(Debug, Clone, Default)]

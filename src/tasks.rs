@@ -22,6 +22,10 @@ pub fn load_registry() -> Task<Message> {
     Task::perform(fetch_registry_async(), Message::RegistryLoaded)
 }
 
+pub fn refresh_registry() -> Task<Message> {
+    Task::perform(refresh_registry_async(), Message::RegistryRefreshed)
+}
+
 pub fn load_installed() -> Task<Message> {
     Task::perform(load_installed_async(), Message::InstalledLoaded)
 }
@@ -375,6 +379,33 @@ async fn fetch_registry_async() -> Result<RegistryIndex, String> {
     }
 
     tracing::info!("Fetched {} modules from registry", index.modules.len());
+    Ok(index)
+}
+
+async fn refresh_registry_async() -> Result<RegistryIndex, String> {
+    let cache_path = paths::registry_cache_path();
+    let _ = tokio::fs::remove_file(&cache_path).await;
+
+    tracing::info!("Force refreshing registry from {}", REGISTRY_URL);
+    let response = HTTP_CLIENT
+        .get(REGISTRY_URL)
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+
+    let index: RegistryIndex = response
+        .json()
+        .await
+        .map_err(|e| format!("Parse error: {e}"))?;
+
+    if let Some(parent) = cache_path.parent() {
+        let _ = tokio::fs::create_dir_all(parent).await;
+    }
+    if let Ok(content) = serde_json::to_string_pretty(&index) {
+        let _ = tokio::fs::write(&cache_path, content).await;
+    }
+
+    tracing::info!("Refreshed registry: {} modules", index.modules.len());
     Ok(index)
 }
 

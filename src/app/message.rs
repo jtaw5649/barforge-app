@@ -29,7 +29,9 @@ pub enum Message {
     InstalledSearchChanged(String),
     ClearInstalledSearch,
 
+    RefreshRegistry,
     RegistryLoaded(Result<RegistryIndex, String>),
+    RegistryRefreshed(Result<RegistryIndex, String>),
     InstalledLoaded(Result<Vec<InstalledModule>, String>),
     InstallCompleted(Result<InstalledModule, String>),
     ToggleCompleted(Result<String, (String, String)>),

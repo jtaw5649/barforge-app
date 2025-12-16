@@ -1,6 +1,6 @@
 [package]
 name = "waybar-manager"
-version = "0.0.5"
+version = "0.0.6"
 edition = "2024"
 description = "Waybar Extension Manager - browse, install, and configure waybar modules"
 license = ""

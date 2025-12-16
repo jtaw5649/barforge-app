@@ -192,15 +192,44 @@ impl App {
                 Task::none()
             }
 
+            Message::RefreshRegistry => {
+                self.browse.refreshing = true;
+                tasks::refresh_registry()
+            }
+
             Message::RegistryLoaded(result) => {
                 match result {
                     Ok(index) => {
                         self.sync_registry_versions(&index);
                         self.registry = Some(index);
                         self.loading = LoadingState::Idle;
+                        self.browse.last_refreshed = Some(std::time::Instant::now());
                     }
                     Err(e) => {
                         self.loading = LoadingState::Failed(e);
+                    }
+                }
+                Task::none()
+            }
+
+            Message::RegistryRefreshed(result) => {
+                self.browse.refreshing = false;
+                match result {
+                    Ok(index) => {
+                        let count = index.modules.len();
+                        self.sync_registry_versions(&index);
+                        self.registry = Some(index);
+                        self.browse.last_refreshed = Some(std::time::Instant::now());
+                        self.push_notification(
+                            format!("Registry refreshed ({count} modules)"),
+                            state::NotificationKind::Success,
+                        );
+                    }
+                    Err(e) => {
+                        self.push_notification(
+                            format!("Failed to refresh registry: {e}"),
+                            state::NotificationKind::Error,
+                        );
                     }
                 }
                 Task::none()
@@ -953,6 +982,53 @@ impl App {
             ..Default::default()
         });
 
+        let refresh_btn_bg = self.theme.surface;
+        let refresh_btn_text = self.theme.text;
+        let refresh_btn_border = self.theme.border;
+        let refresh_btn_hover = self.theme.bg_elevated;
+        let is_refreshing = self.browse.refreshing;
+        let refresh_btn: Element<Message> = if is_refreshing {
+            container(text("↻").size(16.0).color(self.theme.text_muted))
+                .padding(SPACING_SM)
+                .into()
+        } else {
+            button(text("↻").size(16.0))
+                .padding(SPACING_SM)
+                .on_press(Message::RefreshRegistry)
+                .style(move |_theme, status| {
+                    let bg = match status {
+                        button::Status::Hovered | button::Status::Pressed => refresh_btn_hover,
+                        _ => refresh_btn_bg,
+                    };
+                    button::Style {
+                        background: Some(iced::Background::Color(bg)),
+                        text_color: refresh_btn_text,
+                        border: iced::Border {
+                            color: refresh_btn_border,
+                            width: 1.0,
+                            radius: crate::theme::RADIUS_MD.into(),
+                        },
+                        ..Default::default()
+                    }
+                })
+                .into()
+        };
+
+        let last_refreshed_text: Element<Message> = match self.browse.last_refreshed {
+            Some(instant) => {
+                let elapsed = instant.elapsed().as_secs();
+                let display = if elapsed < 60 {
+                    "just now".to_string()
+                } else if elapsed < 3600 {
+                    format!("{}m ago", elapsed / 60)
+                } else {
+                    format!("{}h ago", elapsed / 3600)
+                };
+                text(display).size(12.0).color(self.theme.text_muted).into()
+            }
+            None => Space::new().width(0).into(),
+        };
+
         let header = container(
             row![
                 search_input,
@@ -963,6 +1039,8 @@ impl App {
                 sort_picker,
                 sort_toggle,
                 category_picker,
+                refresh_btn,
+                last_refreshed_text,
             ]
             .spacing(SPACING_SM)
             .align_y(Alignment::Center),
