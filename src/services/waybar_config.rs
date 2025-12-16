@@ -102,6 +102,31 @@ pub fn remove_module(content: &str, module_name: &str) -> Result<String, String>
         .map_err(|e| format!("Failed to serialize config: {e}"))
 }
 
+pub fn substitute_preferences(
+    content: &str,
+    preferences: &std::collections::HashMap<String, crate::services::preferences::PreferenceValue>,
+) -> String {
+    use crate::services::preferences::PreferenceValue;
+
+    let mut result = content.to_string();
+    for (key, value) in preferences {
+        let placeholder = format!("$PREF_{}", key);
+        let replacement = match value {
+            PreferenceValue::String(s) => s.clone(),
+            PreferenceValue::Bool(b) => b.to_string(),
+            PreferenceValue::Number(n) => {
+                if n.fract() == 0.0 {
+                    (*n as i64).to_string()
+                } else {
+                    n.to_string()
+                }
+            }
+        };
+        result = result.replace(&placeholder, &replacement);
+    }
+    result
+}
+
 pub fn merge_module_config(
     waybar_content: &str,
     module_content: &str,
@@ -363,5 +388,35 @@ mod tests {
         let css = "* { font-family: monospace; }";
         let result = remove_module_css(css, "nonexistent@test");
         assert_eq!(result, css);
+    }
+
+    #[test]
+    fn test_substitute_preferences_replaces_placeholders() {
+        use crate::services::preferences::PreferenceValue;
+        use std::collections::HashMap;
+
+        let content = r#"{"exec": "echo $PREF_message", "interval": $PREF_interval}"#;
+        let mut prefs = HashMap::new();
+        prefs.insert("message".to_string(), PreferenceValue::String("Hello".to_string()));
+        prefs.insert("interval".to_string(), PreferenceValue::Number(10.0));
+
+        let result = substitute_preferences(content, &prefs);
+
+        assert!(result.contains("echo Hello"));
+        assert!(result.contains("\"interval\": 10"));
+    }
+
+    #[test]
+    fn test_substitute_preferences_handles_bool() {
+        use crate::services::preferences::PreferenceValue;
+        use std::collections::HashMap;
+
+        let content = r#"{"enabled": $PREF_show}"#;
+        let mut prefs = HashMap::new();
+        prefs.insert("show".to_string(), PreferenceValue::Bool(true));
+
+        let result = substitute_preferences(content, &prefs);
+
+        assert!(result.contains("true"));
     }
 }

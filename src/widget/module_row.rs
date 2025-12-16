@@ -18,7 +18,9 @@ pub fn module_row(
     let uuid = module.uuid.to_string();
     let uuid_toggle = uuid.clone();
     let uuid_position = uuid.clone();
+    let uuid_prefs = uuid.clone();
     let uuid_uninstall = uuid.clone();
+    let has_preferences = module.has_preferences;
     let name = module.waybar_module_name.clone();
     let name_for_confirm = name.clone();
     let enabled = module.enabled;
@@ -103,6 +105,16 @@ pub fn module_row(
         },
     });
 
+    let prefs_widget: Element<Message> = if has_preferences {
+        button(text("\u{2699}").size(FONT_SM))
+            .on_press(Message::OpenPreferences(uuid_prefs))
+            .style(btn_style::ghost(*theme))
+            .padding([SPACE_SM, SPACE_SM])
+            .into()
+    } else {
+        Space::new().width(0).into()
+    };
+
     let uninstall_widget: Element<Message> = if is_uninstalling {
         container(text("Removing...").size(FONT_XS).color(theme.text_muted))
             .padding([SPACE_SM, SPACE_MD])
@@ -135,6 +147,7 @@ pub fn module_row(
             info_column,
             Space::new().width(Length::Fill),
             position_picker,
+            prefs_widget,
             toggle_widget,
             uninstall_widget,
         ]

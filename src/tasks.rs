@@ -553,6 +553,10 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
             let config_path = install_path.join("config.jsonc");
             let with_module_config = if config_path.exists() {
                 if let Ok(module_config) = tokio::fs::read_to_string(&config_path).await {
+                    let prefs = crate::services::preferences::load_preferences(&uuid);
+                    tracing::debug!("Loaded {} preferences for {}", prefs.len(), uuid);
+                    let module_config = waybar_config::substitute_preferences(&module_config, &prefs);
+                    tracing::debug!("Substituted config: {}", module_config);
                     let install_path_str = install_path.to_string_lossy();
                     waybar_config::merge_module_config(&waybar_content, &module_config, &install_path_str)
                         .unwrap_or_else(|e| {
@@ -560,9 +564,11 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
                             waybar_content.clone()
                         })
                 } else {
+                    tracing::warn!("Failed to read module config from {:?}", config_path);
                     waybar_content.clone()
                 }
             } else {
+                tracing::debug!("No config.jsonc found at {:?}", config_path);
                 waybar_content.clone()
             };
             waybar_config::add_module(&with_module_config, &waybar_module_name, section)
