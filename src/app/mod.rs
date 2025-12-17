@@ -50,7 +50,8 @@ impl App {
             Message::ModuleClicked(_uuid) => Task::none(),
 
             Message::InstallModule(uuid) => {
-                if self.installed_uuids.contains(&uuid) {
+                let uuid_str = uuid.to_string();
+                if self.installed_uuids.contains(&uuid_str) {
                     self.push_notification(
                         "Module already installed".to_string(),
                         state::NotificationKind::Info,
@@ -60,10 +61,10 @@ impl App {
                 }
 
                 if let Some(registry) = &self.registry
-                    && let Some(module) = registry.find_by_uuid(&uuid)
+                    && let Some(module) = registry.find_by_uuid(&uuid_str)
                 {
                     return tasks::install_module(
-                        uuid,
+                        uuid_str,
                         module.name.clone(),
                         module.version.clone(),
                         module.repo_url.clone(),
@@ -79,12 +80,13 @@ impl App {
             }
 
             Message::ToggleModule { uuid, enabled } => {
-                self.installed.toggling.insert(uuid.clone());
-                tasks::toggle_module(uuid, enabled)
+                let uuid_str = uuid.to_string();
+                self.installed.toggling.insert(uuid_str.clone());
+                tasks::toggle_module(uuid_str, enabled)
             }
 
             Message::SetModulePosition { uuid, section } => {
-                tasks::change_module_position(uuid, section)
+                tasks::change_module_position(uuid.to_string(), section)
             }
 
             Message::PositionChanged(result) => {
@@ -114,17 +116,19 @@ impl App {
             }
 
             Message::UninstallModule(uuid) => {
-                self.installed.uninstalling.insert(uuid.clone());
-                tasks::uninstall_module(uuid)
+                let uuid_str = uuid.to_string();
+                self.installed.uninstalling.insert(uuid_str.clone());
+                tasks::uninstall_module(uuid_str)
             }
 
             Message::OpenPreferences(uuid) => {
-                if let Some(installed) = self.installed_modules.iter().find(|m| m.uuid.to_string() == uuid) {
+                let uuid_str = uuid.to_string();
+                if let Some(installed) = self.installed_modules.iter().find(|m| m.uuid == uuid) {
                     let schema = crate::services::load_schema(&installed.install_path);
                     if let Some(schema) = schema {
-                        let values = crate::services::load_preferences(&uuid);
+                        let values = crate::services::load_preferences(&uuid_str);
                         let merged = crate::services::preferences::merge_with_defaults(values, &schema);
-                        self.preferences.open_for = Some(uuid);
+                        self.preferences.open_for = Some(uuid_str);
                         self.preferences.schema = Some(schema);
                         self.preferences.values = merged;
                         self.preferences.module_name = installed.waybar_module_name.clone();
@@ -162,14 +166,15 @@ impl App {
             Message::UninstallCompleted(result) => handlers::handle_uninstall_completed(self, result),
 
             Message::UpdateModule(uuid) => {
-                if let Some(_installed) = self.installed_modules.iter().find(|m| m.uuid.to_string() == uuid)
+                let uuid_str = uuid.to_string();
+                if let Some(_installed) = self.installed_modules.iter().find(|m| m.uuid == uuid)
                     && let Some(registry) = &self.registry
-                    && let Some(registry_module) = registry.find_by_uuid(&uuid)
+                    && let Some(registry_module) = registry.find_by_uuid(&uuid_str)
                     && let Some(new_version) = &registry_module.version
                 {
-                    self.installed.updating.insert(uuid.clone());
+                    self.installed.updating.insert(uuid_str.clone());
                     return tasks::update_module(
-                        uuid,
+                        uuid_str,
                         registry_module.repo_url.clone(),
                         new_version.clone(),
                     );
@@ -330,10 +335,11 @@ impl App {
             Message::ScreenshotLoaded(result) => handlers::handle_screenshot_loaded(self, result),
 
             Message::DetailInstallModule => {
-                if let Screen::ModuleDetail(ref uuid) = self.screen {
+                if let Screen::ModuleDetail(ref uuid_str) = self.screen
+                    && let Ok(uuid) = crate::domain::ModuleUuid::try_from(uuid_str.as_str())
+                {
                     self.module_detail.installing = true;
-                    let uuid_clone = uuid.clone();
-                    return Task::done(Message::InstallModule(uuid_clone));
+                    return Task::done(Message::InstallModule(uuid));
                 }
                 Task::none()
             }
@@ -1166,10 +1172,11 @@ impl App {
             let rows: Vec<Element<Message>> = updates
                 .iter()
                 .map(|m| {
-                    let uuid = m.uuid.to_string();
+                    let uuid_str = m.uuid.to_string();
+                    let uuid_module = m.uuid.clone();
                     let current_ver = m.version.to_string();
                     let new_ver = m.registry_version.as_ref().map(|v| v.to_string()).unwrap_or_default();
-                    let is_updating = self.installed.updating.contains(&uuid);
+                    let is_updating = self.installed.updating.contains(&uuid_str);
 
                     let theme = self.theme;
                     let primary = theme.primary;
@@ -1198,10 +1205,9 @@ impl App {
                         })
                         .into()
                     } else {
-                        let uuid_clone = uuid.clone();
                         button(text("Update").size(12.0))
                             .padding([SPACING_XS, SPACING_SM])
-                            .on_press(Message::UpdateModule(uuid_clone))
+                            .on_press(Message::UpdateModule(uuid_module))
                             .style(move |_theme, status| {
                                 let bg = match status {
                                     button::Status::Hovered | button::Status::Pressed => primary_hover,

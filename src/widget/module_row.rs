@@ -16,9 +16,9 @@ pub fn module_row(
     theme: &AppTheme,
 ) -> Element<'static, Message> {
     let uuid = module.uuid.to_string();
-    let uuid_toggle = uuid.clone();
-    let uuid_position = uuid.clone();
-    let uuid_prefs = uuid.clone();
+    let uuid_toggle = module.uuid.clone();
+    let uuid_position = module.uuid.clone();
+    let uuid_prefs = module.uuid.clone();
     let uuid_uninstall = uuid.clone();
     let has_preferences = module.has_preferences;
     let name = module.waybar_module_name.clone();
