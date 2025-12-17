@@ -1,10 +1,10 @@
 <p align="center">
   <img src="assets/icons/hicolor/scalable/apps/org.waybar.ExtensionManager.svg" width="128" height="128" alt="Waybar Extension Manager">
 </p>
-<h1 align="center">Waybar Extension Manager</h1>
+<h1 align="center">Waybar Manager</h1>
 
 <p align="center">
-  <b>An iced extension manager for Waybar — browse, install, and manage modules from a central registry.</b>
+  <b>An iced module manager for Waybar — browse, install, and manage modules from a central registry.</b>
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Rust-1.75%2B-orange?style=flat-square&logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/iced-0.14-blue?style=flat-square" alt="iced">
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License">
 </p>
 
 ---
@@ -96,7 +96,6 @@ The module registry is hosted on GitHub Pages:
 ### Submitting a Module
 
 1. Create your module repo with required files
-2. Add `versions.json` for waybar version compatibility
 3. Submit a PR to the registry repo
 
 ## Development
@@ -119,14 +118,17 @@ cargo clippy
 ### Architecture
 
 ```
-src/
-├── main.rs              # Application entry point
-├── app/                 # Elm architecture (state, message, update, view)
-├── domain/              # ModuleUuid, RegistryModule, InstalledModule
-├── services/            # Registry fetch, module management
-├── tasks.rs             # Async Task operations
-├── theme/               # Custom theming (colors, styles)
-└── widget/              # Reusable UI components (sidebar, cards, rows)
+.
+├── crates/
+│   └── waybar-registry-types/   # Shared types (ModuleUuid, RegistryModule, etc.)
+└── src/
+    ├── main.rs              # Application entry point
+    ├── app/                 # Elm architecture (state, message, update, view)
+    ├── domain/              # InstalledModule, BarSection (app-specific types)
+    ├── services/            # Registry fetch, module management
+    ├── tasks.rs             # Async Task operations
+    ├── theme/               # Custom theming (colors, styles)
+    └── widget/              # Reusable UI components (sidebar, cards, rows)
 ```
 
 ## Credits

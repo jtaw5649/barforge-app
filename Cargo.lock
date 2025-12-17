@@ -4937,7 +4937,7 @@ dependencies = [
 
 [[package]]
 name = "waybar-manager"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "chrono",
  "dirs",
@@ -4961,6 +4961,18 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "url",
+ "waybar-registry-types",
+]
+
+[[package]]
+name = "waybar-registry-types"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "semver",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
 ]
 
 [[package]]

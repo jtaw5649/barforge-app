@@ -1,9 +1,13 @@
+[workspace]
+members = ["crates/waybar-registry-types"]
+resolver = "2"
+
 [package]
 name = "waybar-manager"
-version = "0.0.7"
+version = "0.1.0"
 edition = "2024"
 description = "Waybar Extension Manager - browse, install, and configure waybar modules"
-license = ""
+license = "GPL-3.0-or-later"
 authors = ["jtaw"]
 
 [[bin]]
@@ -11,6 +15,8 @@ name = "waybar-manager-bin"
 path = "src/main.rs"
 
 [dependencies]
+waybar-registry-types = { path = "crates/waybar-registry-types" }
+
 # UI Framework
 iced = { version = "0.14", features = ["tokio", "svg", "image", "advanced"] }
 iced_aw = { version = "0.13", default-features = false, features = ["card", "wrap"] }

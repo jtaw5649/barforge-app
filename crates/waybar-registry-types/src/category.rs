@@ -92,14 +92,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_display_name_returns_human_readable() {
+    fn display_name_returns_human_readable() {
         assert_eq!(ModuleCategory::System.display_name(), "System");
         assert_eq!(ModuleCategory::Time.display_name(), "Time & Date");
         assert_eq!(ModuleCategory::Tray.display_name(), "System Tray");
     }
 
     #[test]
-    fn test_all_returns_all_categories() {
+    fn all_returns_all_categories() {
         let all = ModuleCategory::all();
         assert_eq!(all.len(), 13);
         assert!(all.contains(&ModuleCategory::System));
@@ -107,12 +107,12 @@ mod tests {
     }
 
     #[test]
-    fn test_display_trait() {
+    fn display_trait_works() {
         assert_eq!(format!("{}", ModuleCategory::Weather), "Weather");
     }
 
     #[test]
-    fn test_try_from_valid_strings() {
+    fn try_from_valid_strings() {
         assert_eq!(
             ModuleCategory::try_from("system").unwrap(),
             ModuleCategory::System
@@ -128,19 +128,19 @@ mod tests {
     }
 
     #[test]
-    fn test_try_from_invalid_string() {
+    fn try_from_invalid_string_fails() {
         assert!(ModuleCategory::try_from("invalid").is_err());
     }
 
     #[test]
-    fn test_clone() {
+    fn copy_works() {
         let category = ModuleCategory::Network;
-        let cloned = category;
-        assert_eq!(category, cloned);
+        let copied = category;
+        assert_eq!(category, copied);
     }
 
     #[test]
-    fn test_hash() {
+    fn hashes_consistently() {
         use std::collections::HashSet;
         let mut set = HashSet::new();
         set.insert(ModuleCategory::Audio);
