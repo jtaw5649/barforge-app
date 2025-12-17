@@ -658,17 +658,7 @@ impl App {
             ..Default::default()
         });
 
-        let picker_colors = PickListColors {
-            surface: self.theme.surface,
-            text: self.theme.text,
-            text_muted: self.theme.text_secondary,
-            border: self.theme.border,
-            primary: self.theme.primary,
-            menu_surface: self.theme.surface,
-            menu_border: self.theme.border,
-            menu_text: self.theme.text,
-            menu_selected_bg: self.theme.primary,
-        };
+        let picker_colors = PickListColors::from_theme(&self.theme);
         let category_picker = pick_list(
             CategoryFilter::all(),
             Some(self.browse.selected_category),

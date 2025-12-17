@@ -50,17 +50,7 @@ pub fn module_row(
             .into()
     };
 
-    let picker_colors = PickListColors {
-        surface: theme.bg_surface,
-        text: theme.text_normal,
-        text_muted: theme.text_muted,
-        border: theme.border_subtle,
-        primary: theme.primary,
-        menu_surface: theme.bg_surface,
-        menu_border: theme.border_subtle,
-        menu_text: theme.text_normal,
-        menu_selected_bg: theme.primary,
-    };
+    let picker_colors = PickListColors::from_theme(theme);
 
     let position_picker = pick_list(
         BarSection::all(),

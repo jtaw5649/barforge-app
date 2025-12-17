@@ -238,17 +238,7 @@ fn render_field<'a>(
                 .cloned();
 
             let key_owned = key.clone();
-            let picker_colors = PickListColors {
-                surface: theme_copy.bg_elevated,
-                text: theme_copy.text_normal,
-                text_muted: theme_copy.text_faint,
-                border: theme_copy.border,
-                primary: theme_copy.primary,
-                menu_surface: theme_copy.bg_surface,
-                menu_border: theme_copy.border,
-                menu_text: theme_copy.text_normal,
-                menu_selected_bg: theme_copy.primary,
-            };
+            let picker_colors = PickListColors::from_theme(&theme_copy);
             let picker = pick_list(
                 options.clone(),
                 selected,

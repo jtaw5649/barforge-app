@@ -2,6 +2,8 @@ use iced::widget::pick_list::{Status, Style};
 use iced::overlay::menu;
 use iced::{Background, Border, Color, Shadow, Vector};
 
+use super::AppTheme;
+
 #[derive(Clone, Copy)]
 pub struct PickListColors {
     pub surface: Color,
@@ -13,6 +15,23 @@ pub struct PickListColors {
     pub menu_border: Color,
     pub menu_text: Color,
     pub menu_selected_bg: Color,
+}
+
+impl PickListColors {
+    #[must_use]
+    pub fn from_theme(theme: &AppTheme) -> Self {
+        Self {
+            surface: theme.bg_surface,
+            text: theme.text_normal,
+            text_muted: theme.text_muted,
+            border: theme.border_subtle,
+            primary: theme.primary,
+            menu_surface: theme.bg_surface,
+            menu_border: theme.border_subtle,
+            menu_text: theme.text_normal,
+            menu_selected_bg: theme.primary,
+        }
+    }
 }
 
 pub fn pick_list_style(
