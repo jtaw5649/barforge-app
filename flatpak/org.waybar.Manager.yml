@@ -29,6 +29,7 @@ modules:
       - install -Dm755 target/release/waybar-manager-bin -t /app/bin/
       - install -Dm644 data/org.waybar.Manager.desktop -t /app/share/applications/
       - install -Dm644 data/org.waybar.Manager.metainfo.xml -t /app/share/metainfo/
+      - install -Dm644 assets/icons/hicolor/scalable/apps/org.waybar.Manager.svg -t /app/share/icons/hicolor/scalable/apps/
     sources:
       - type: dir
         path: ..
