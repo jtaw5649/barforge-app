@@ -3,8 +3,7 @@ use iced::{Background, Border, Theme};
 
 use super::{AppTheme, RADIUS_MD};
 
-pub fn sidebar(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn sidebar(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.sidebar_bg)),
         border: Border {
@@ -16,8 +15,7 @@ pub fn sidebar(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
     }
 }
 
-pub fn card(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn card(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_surface)),
         border: Border {
@@ -29,8 +27,7 @@ pub fn card(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
     }
 }
 
-pub fn card_hover(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn card_hover(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_elevated)),
         border: Border {
@@ -42,8 +39,7 @@ pub fn card_hover(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
     }
 }
 
-pub fn list_item(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn list_item(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_surface)),
         border: Border {
@@ -55,8 +51,7 @@ pub fn list_item(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
     }
 }
 
-pub fn page(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn page(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_base)),
         border: Border::default(),
@@ -64,8 +59,7 @@ pub fn page(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
     }
 }
 
-pub fn panel(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn panel(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_surface)),
         border: Border::default(),
@@ -73,8 +67,7 @@ pub fn panel(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
     }
 }
 
-pub fn floating(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn floating(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_floating)),
         border: Border {
@@ -86,16 +79,14 @@ pub fn floating(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
     }
 }
 
-pub fn overlay(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn overlay(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_overlay)),
         ..Default::default()
     }
 }
 
-pub fn input(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn input(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_elevated)),
         border: Border {
@@ -107,8 +98,7 @@ pub fn input(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
     }
 }
 
-pub fn notification_success(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn notification_success(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.success)),
         border: Border {
@@ -120,8 +110,7 @@ pub fn notification_success(app_theme: &AppTheme) -> impl Fn(&Theme) -> containe
     }
 }
 
-pub fn notification_error(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn notification_error(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.danger)),
         border: Border {
@@ -133,8 +122,7 @@ pub fn notification_error(app_theme: &AppTheme) -> impl Fn(&Theme) -> container:
     }
 }
 
-pub fn notification_info(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn notification_info(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_floating)),
         border: Border {
@@ -146,8 +134,7 @@ pub fn notification_info(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::
     }
 }
 
-pub fn notification_warning(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn notification_warning(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.warning)),
         border: Border {
@@ -159,16 +146,15 @@ pub fn notification_warning(app_theme: &AppTheme) -> impl Fn(&Theme) -> containe
     }
 }
 
-pub fn modal_backdrop(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    overlay(app_theme)
+pub fn modal_backdrop(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
+    overlay(theme)
 }
 
-pub fn modal(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    floating(app_theme)
+pub fn modal(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
+    floating(theme)
 }
 
-pub fn search_bar(app_theme: &AppTheme) -> impl Fn(&Theme) -> container::Style {
-    let theme = *app_theme;
+pub fn search_bar(theme: AppTheme) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
         background: Some(Background::Color(theme.bg_elevated)),
         border: Border {

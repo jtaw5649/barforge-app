@@ -1,0 +1,8 @@
+[workspace]
+members = ["cargo:."]
+
+[dist]
+cargo-dist-version = "0.30.3"
+ci = "github"
+installers = ["shell"]
+targets = ["aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"]

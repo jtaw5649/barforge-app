@@ -1,4 +1,4 @@
-use iced::widget::{button, column, container, row, text, Column, Space};
+use iced::widget::{button, column, container, row, text, Space};
 use iced::{Background, Border, Element, Length, Vector};
 
 use crate::app::message::Message;
@@ -19,86 +19,103 @@ pub fn sidebar(
 ) -> Element<'static, Message> {
     let theme_copy = *theme;
 
-    let items = [
-        (Icon::Browse, "Browse", Screen::Browse, None),
-        (
-            Icon::Installed,
-            "Installed",
-            Screen::Installed,
-            Some(installed_count),
-        ),
-        (Icon::Updates, "Updates", Screen::Updates, if update_count > 0 { Some(update_count) } else { None }),
-    ];
+    let marketplace_label = text("MARKETPLACE")
+        .size(FONT_XS)
+        .color(theme.text_faint)
+        .font(iced::Font::MONOSPACE);
 
-    let buttons: Vec<Element<Message>> = items
-        .into_iter()
-        .map(|(icon, label, screen, badge)| {
-            let is_active = current == &screen;
-            let icon_color = if is_active {
-                theme.text_normal
-            } else {
-                theme.text_muted
-            };
+    let browse_btn = {
+        let is_active = matches!(current, Screen::Browse);
+        let color = if is_active { theme.text_normal } else { theme.text_muted };
+        button(
+            row![
+                Icon::Browse.colored(ICON_MD, color),
+                text("Browse").size(FONT_SM).color(color)
+            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+        )
+        .on_press(Message::Navigate(Screen::Browse))
+        .style(if is_active { btn_style::sidebar_active(theme_copy) } else { btn_style::sidebar(theme_copy) })
+        .width(Length::Fill)
+        .padding([SPACE_MD, SPACE_SM])
+    };
 
-            let icon_svg = icon.colored(ICON_MD, icon_color);
+    let library_label = text("LIBRARY")
+        .size(FONT_XS)
+        .color(theme.text_faint)
+        .font(iced::Font::MONOSPACE);
 
-            let label_text = text(label).size(FONT_SM).color(icon_color);
-
-            let content: Element<Message> = if let Some(count) = badge {
-                if count > 0 {
-                    let badge_container = container(
-                        text(count.to_string())
-                            .size(FONT_XS)
-                            .color(theme.text_normal),
-                    )
+    let installed_btn = {
+        let is_active = matches!(current, Screen::Installed);
+        let color = if is_active { theme.text_normal } else { theme.text_muted };
+        let content = if installed_count > 0 {
+             row![
+                Icon::Installed.colored(ICON_MD, color),
+                text("Installed").size(FONT_SM).color(color),
+                Space::new().width(Length::Fill),
+                container(text(installed_count.to_string()).size(FONT_XS).color(theme.text_normal))
                     .padding([2.0, 8.0])
-                    .style(move |_: &iced::Theme| iced::widget::container::Style {
-                        background: Some(Background::Color(theme_copy.accent)),
-                        border: Border {
-                            radius: 10.0.into(),
-                            ..Default::default()
-                        },
+                    .style(move |_| container::Style {
+                        background: Some(Background::Color(theme_copy.bg_elevated)),
+                        border: Border { radius: 10.0.into(), ..Default::default() },
                         ..Default::default()
-                    });
+                    })
+            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+        } else {
+             row![
+                Icon::Installed.colored(ICON_MD, color),
+                text("Installed").size(FONT_SM).color(color)
+            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+        };
 
-                    row![
-                        icon_svg,
-                        label_text,
-                        Space::new().width(Length::Fill),
-                        badge_container
-                    ]
-                    .spacing(SPACE_SM)
-                    .align_y(iced::Alignment::Center)
-                    .into()
-                } else {
-                    row![icon_svg, label_text]
-                        .spacing(SPACE_SM)
-                        .align_y(iced::Alignment::Center)
-                        .into()
-                }
-            } else {
-                row![icon_svg, label_text]
-                    .spacing(SPACE_SM)
-                    .align_y(iced::Alignment::Center)
-                    .into()
-            };
+        button(content)
+            .on_press(Message::Navigate(Screen::Installed))
+            .style(if is_active { btn_style::sidebar_active(theme_copy) } else { btn_style::sidebar(theme_copy) })
+            .width(Length::Fill)
+            .padding([SPACE_MD, SPACE_SM])
+    };
 
-            button(content)
-                .on_press(Message::Navigate(screen))
-                .style(if is_active {
-                    btn_style::sidebar_active(theme_copy)
-                } else {
-                    btn_style::sidebar(theme_copy)
-                })
-                .width(Length::Fill)
-                .padding([SPACE_MD, SPACE_SM])
-                .into()
-        })
-        .collect();
+    let updates_btn = {
+        let is_active = matches!(current, Screen::Updates);
+        let color = if is_active { theme.text_normal } else { theme.text_muted };
+        let content = if update_count > 0 {
+             row![
+                Icon::Updates.colored(ICON_MD, color),
+                text("Updates").size(FONT_SM).color(color),
+                Space::new().width(Length::Fill),
+                container(text(update_count.to_string()).size(FONT_XS).color(theme.bg_base))
+                    .padding([2.0, 8.0])
+                    .style(move |_| container::Style {
+                        background: Some(Background::Color(theme_copy.warning)),
+                        border: Border { radius: 10.0.into(), ..Default::default() },
+                        ..Default::default()
+                    })
+            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+        } else {
+             row![
+                Icon::Updates.colored(ICON_MD, color),
+                text("Updates").size(FONT_SM).color(color)
+            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+        };
 
-    let nav = Column::with_children(buttons)
-        .spacing(SPACE_XS)
-        .padding([0.0, SPACE_SM]);
+        button(content)
+            .on_press(Message::Navigate(Screen::Updates))
+            .style(if is_active { btn_style::sidebar_active(theme_copy) } else { btn_style::sidebar(theme_copy) })
+            .width(Length::Fill)
+            .padding([SPACE_MD, SPACE_SM])
+    };
+
+
+    let nav = column![
+        marketplace_label,
+        Space::new().height(SPACE_XS),
+        browse_btn,
+        Space::new().height(SPACE_XL),
+        library_label,
+        Space::new().height(SPACE_XS),
+        installed_btn,
+        updates_btn
+    ]
+    .padding([0.0, SPACE_SM]);
 
     let header = container(
         row![

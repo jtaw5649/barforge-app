@@ -1,11 +1,11 @@
 use iced::widget::{button, column, container, row, text, Space};
-use iced::{Alignment, Background, Border, Element, Length};
+use iced::{Alignment, Element, Length};
 
 use crate::app::message::Message;
 use crate::app::state::ConfirmationAction;
 use crate::theme::{
-    button as button_style, shadow_lg, AppTheme, CONFIRMATION_DIALOG_WIDTH, FONT_MD, FONT_SM,
-    RADIUS_LG, SPACE_LG, SPACE_MD, SPACE_SM,
+    button as button_style, container as cont_style, AppTheme, CONFIRMATION_DIALOG_WIDTH, FONT_MD,
+    FONT_SM, SPACE_LG, SPACE_MD, SPACE_SM,
 };
 
 pub fn confirmation_dialog(action: &ConfirmationAction, theme: &AppTheme) -> Element<'static, Message> {
@@ -15,8 +15,6 @@ pub fn confirmation_dialog(action: &ConfirmationAction, theme: &AppTheme) -> Ele
             format!("Are you sure you want to uninstall \"{}\"? This action cannot be undone.", name),
         ),
     };
-
-    let theme_copy = *theme;
 
     let cancel_btn = button(text("Cancel").size(FONT_SM))
         .on_press(Message::CancelConfirmation)
@@ -44,22 +42,10 @@ pub fn confirmation_dialog(action: &ConfirmationAction, theme: &AppTheme) -> Ele
 
     let dialog = container(dialog_content)
         .padding(SPACE_LG)
-        .style(move |_| iced::widget::container::Style {
-            background: Some(Background::Color(theme_copy.bg_floating)),
-            border: Border {
-                color: theme_copy.border_default,
-                width: 1.0,
-                radius: RADIUS_LG.into(),
-            },
-            shadow: shadow_lg(),
-            ..Default::default()
-        });
+        .style(cont_style::modal(*theme));
 
     container(dialog)
         .center(Length::Fill)
-        .style(move |_| iced::widget::container::Style {
-            background: Some(Background::Color(theme_copy.bg_overlay)),
-            ..Default::default()
-        })
+        .style(cont_style::modal_backdrop(*theme))
         .into()
 }

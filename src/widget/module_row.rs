@@ -1,12 +1,12 @@
 use iced::widget::{button, column, container, pick_list, row, text, toggler, Space};
-use iced::{Alignment, Background, Border, Element, Length};
+use iced::{Alignment, Element, Length};
 
 use crate::app::message::Message;
 use crate::app::state::ConfirmationAction;
 use crate::domain::{BarSection, InstalledModule};
 use crate::theme::{
-    button as btn_style, menu_style, pick_list_style, shadow_sm, AppTheme, PickListColors,
-    FONT_2XS, FONT_SM, FONT_XS, RADIUS_MD, RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM,
+    button as btn_style, container as cont_style, menu_style, pick_list_style, AppTheme,
+    PickListColors, FONT_2XS, FONT_SM, FONT_XS, RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM,
 };
 
 pub fn module_row(
@@ -85,12 +85,11 @@ pub fn module_row(
                 uuid: uuid_uninstall,
                 name: name_for_confirm,
             }))
-            .style(btn_style::secondary(*theme))
+            .style(btn_style::danger(*theme))
             .padding([SPACE_SM, SPACE_MD])
             .into()
     };
 
-    let theme_copy = *theme;
     let info_column = column![
         text(name).size(FONT_SM).color(theme.text_normal),
         row![
@@ -115,16 +114,7 @@ pub fn module_row(
         .padding(SPACE_MD)
         .align_y(Alignment::Center),
     )
-    .style(move |_| iced::widget::container::Style {
-        background: Some(Background::Color(theme_copy.bg_surface)),
-        border: Border {
-            color: theme_copy.border_subtle,
-            width: 1.0,
-            radius: RADIUS_MD.into(),
-        },
-        shadow: shadow_sm(),
-        ..Default::default()
-    })
+    .style(cont_style::list_item(*theme))
     .width(Length::Fill)
     .into()
 }

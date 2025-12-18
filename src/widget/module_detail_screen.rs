@@ -251,18 +251,51 @@ pub fn module_detail_screen<'a>(
         ScreenshotState::NotLoaded => Space::new().into(),
     };
 
+    let about_title = text("About").size(FONT_LG).color(theme.text_normal);
+    
+    let description_content: Element<'a, Message> = if module.description.len() > 0 {
+         text(&module.description)
+            .size(FONT_MD)
+            .color(theme.text_muted)
+            .into()
+    } else {
+        text("No description provided.").size(FONT_SM).color(theme.text_faint).into()
+    };
+
     let description_section = container(
         column![
-            text("Description")
-                .size(FONT_LG)
-                .color(theme.text_normal),
+            about_title,
             Space::new().height(SPACE_SM),
-            text(&module.description)
-                .size(FONT_MD)
-                .color(theme.text_muted),
+            description_content,
         ],
     )
-    .style(cont_style::card(theme))
+    .style(cont_style::card(*theme))
+    .padding(SPACE_LG)
+    .width(Length::Fill);
+
+    let reviews_section = container(
+        column![
+            text("Reviews").size(FONT_LG).color(theme.text_normal),
+            Space::new().height(SPACE_SM),
+            container(
+                text("Reviews coming soon in v1.0.0")
+                    .size(FONT_SM)
+                    .color(theme.text_faint)
+            )
+            .padding(SPACE_LG)
+            .width(Length::Fill)
+            .style(move |_: &iced::Theme| iced::widget::container::Style {
+                background: Some(Background::Color(theme_copy.bg_base)),
+                border: Border {
+                    radius: RADIUS_SM.into(),
+                    width: 1.0,
+                    color: theme_copy.border_subtle,
+                },
+                ..Default::default()
+            })
+        ]
+    )
+    .style(cont_style::card(*theme))
     .padding(SPACE_LG)
     .width(Length::Fill);
 
@@ -304,7 +337,7 @@ pub fn module_detail_screen<'a>(
                 column(info_items).spacing(SPACE_SM),
             ],
         )
-        .style(cont_style::card(theme))
+        .style(cont_style::card(*theme))
         .padding(SPACE_LG)
         .width(Length::Fill)
         .into()
@@ -322,7 +355,7 @@ pub fn module_detail_screen<'a>(
     .padding([SPACE_SM, SPACE_LG]);
 
     let links_section = container(repo_button)
-        .style(cont_style::card(theme))
+        .style(cont_style::card(*theme))
         .padding(SPACE_LG)
         .width(Length::Fill);
 
@@ -336,6 +369,8 @@ pub fn module_detail_screen<'a>(
         screenshot_section,
         Space::new().height(SPACE_LG),
         description_section,
+        Space::new().height(SPACE_LG),
+        reviews_section,
         Space::new().height(SPACE_MD),
         info_section,
         Space::new().height(SPACE_MD),

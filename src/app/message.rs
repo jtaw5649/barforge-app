@@ -2,7 +2,8 @@ use iced::widget::image;
 
 use crate::app::state::{CategoryFilter, ConfirmationAction, NotificationKind, Screen, SortField, ViewMode};
 use crate::domain::{BarSection, InstalledModule, ModuleUuid, RegistryIndex};
-use crate::services::PreferenceValue;
+use crate::services::{DepReport, InstallStage, PreferenceValue};
+use crate::security::SandboxStatus;
 use crate::theme::ThemeMode;
 
 #[derive(Debug, Clone)]
@@ -35,7 +36,7 @@ pub enum Message {
     InstalledLoaded(Result<Vec<InstalledModule>, String>),
     InstallCompleted(Result<InstalledModule, String>),
     ToggleCompleted(Result<String, (String, String)>),
-    UninstallCompleted(Result<String, String>),
+    UninstallCompleted(Result<String, (String, String)>),
     UpdateCompleted(Result<InstalledModule, String>),
     UpdateAllCompleted(Result<usize, String>),
 
@@ -72,4 +73,10 @@ pub enum Message {
     TrayShowWindow,
     TrayCheckUpdates,
     TrayQuit,
+
+    InstallProgress { uuid: ModuleUuid, stage: InstallStage },
+    DependencyCheckCompleted(Result<DepReport, String>),
+    RevocationCheckCompleted(Result<(), String>),
+    SignatureVerified(Result<(), String>),
+    SandboxStatusChanged(SandboxStatus),
 }

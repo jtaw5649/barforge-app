@@ -4,7 +4,23 @@ use std::time::Duration;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 
-pub const REGISTRY_URL: &str = "https://jtaw5649.github.io/waybar-modules-registry/index.json";
+pub const REGISTRY_URL: &str = "https://waybar-registry-api.jtaw.workers.dev/api/v1/index";
+pub const SECURITY_CHECK_URL: &str = "https://waybar-registry-api.jtaw.workers.dev/security/check";
+pub const PACKAGES_BASE_URL: &str = "https://waybar-registry-api.jtaw.workers.dev/packages";
+
+#[must_use]
+pub fn package_url(uuid: &str, version: &str) -> String {
+    let encoded_uuid = urlencoding::encode(uuid);
+    let encoded_version = urlencoding::encode(version);
+    format!("{PACKAGES_BASE_URL}/{encoded_uuid}/{encoded_version}/package.tar.gz")
+}
+
+#[must_use]
+pub fn signature_url(uuid: &str, version: &str) -> String {
+    let encoded_uuid = urlencoding::encode(uuid);
+    let encoded_version = urlencoding::encode(version);
+    format!("{PACKAGES_BASE_URL}/{encoded_uuid}/{encoded_version}/package.tar.gz.minisig")
+}
 
 pub static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| {
     Client::builder()
@@ -185,5 +201,26 @@ mod tests {
         let path1 = screenshot_cache_path("https://example.com/a.png");
         let path2 = screenshot_cache_path("https://example.com/b.png");
         assert_ne!(path1, path2);
+    }
+
+    #[test]
+    fn test_package_url_encoding() {
+        let url = package_url("weather@test", "1.0.0");
+        assert!(url.contains("weather%40test"));
+        assert!(url.contains("1.0.0"));
+        assert!(url.ends_with("package.tar.gz"));
+    }
+
+    #[test]
+    fn test_signature_url_encoding() {
+        let url = signature_url("weather@test", "1.0.0");
+        assert!(url.contains("weather%40test"));
+        assert!(url.contains("1.0.0"));
+        assert!(url.ends_with("package.tar.gz.minisig"));
+    }
+
+    #[test]
+    fn test_security_check_url_constant() {
+        assert!(SECURITY_CHECK_URL.contains("security/check"));
     }
 }

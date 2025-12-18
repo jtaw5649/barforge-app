@@ -3,7 +3,7 @@ use iced::{Background, Border, Color, Element, Length, Radians};
 
 use crate::app::message::Message;
 use crate::theme::{
-    shadow_sm, AppTheme, FONT_MD, FONT_SM, FONT_XS, RADIUS_MD, RADIUS_SM, SKELETON_BAR_MD,
+    container as cont_style, AppTheme, FONT_MD, FONT_SM, FONT_XS, RADIUS_SM, SKELETON_BAR_MD,
     SKELETON_BAR_SM, SPACE_MD, SPACE_SM, SPACE_XS,
 };
 
@@ -52,7 +52,6 @@ fn skeleton_bar(
 }
 
 pub fn skeleton_card(theme: &AppTheme, width: f32, shimmer_frame: usize) -> Element<'static, Message> {
-    let theme_copy = *theme;
     let shimmer_phase = ((shimmer_frame % 30) as f32 / 30.0) * 1.3 - 0.3;
 
     let header = column![
@@ -83,15 +82,6 @@ pub fn skeleton_card(theme: &AppTheme, width: f32, shimmer_frame: usize) -> Elem
     container(card_content)
         .padding(SPACE_MD)
         .width(Length::Fixed(width))
-        .style(move |_: &iced::Theme| iced::widget::container::Style {
-            background: Some(Background::Color(theme_copy.bg_surface)),
-            border: Border {
-                color: theme_copy.border_subtle,
-                width: 1.0,
-                radius: RADIUS_MD.into(),
-            },
-            shadow: shadow_sm(),
-            ..Default::default()
-        })
+        .style(cont_style::card(*theme))
         .into()
 }

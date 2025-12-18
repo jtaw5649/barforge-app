@@ -1,18 +1,27 @@
+[workspace]
+members = ["crates/waybar-registry-types"]
+resolver = "2"
+
 [package]
 name = "waybar-manager"
-version = "0.0.7"
+version = "0.3.1"
 edition = "2024"
-description = "Waybar Extension Manager - browse, install, and configure waybar modules"
-license = ""
+description = "Waybar Manager - browse, install, and manage waybar modules"
+license = "GPL-3.0-or-later"
 authors = ["jtaw"]
+repository = "https://github.com/jtaw5649/waybar-manager"
+homepage = "https://github.com/jtaw5649/waybar-manager"
+readme = "README.md"
 
 [[bin]]
 name = "waybar-manager-bin"
 path = "src/main.rs"
 
 [dependencies]
+waybar-registry-types = { path = "crates/waybar-registry-types" }
+
 # UI Framework
-iced = { version = "0.14", features = ["tokio", "svg", "image", "advanced"] }
+iced = { version = "0.14", features = ["tokio", "svg", "image", "advanced", "markdown"] }
 iced_aw = { version = "0.13", default-features = false, features = ["card", "wrap"] }
 
 # Serialization
@@ -34,6 +43,7 @@ notify = "7"
 
 # Utilities
 thiserror = "2.0"
+anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 once_cell = "1"
@@ -42,14 +52,44 @@ chrono = { version = "0.4", features = ["serde"] }
 semver = { version = "1", features = ["serde"] }
 open = "5"
 url = "2"
+urlencoding = "2.1"
+shellexpand = "3.1"
+regex = "1.11"
+futures-util = "0.3"
+
+# CLI
+clap = { version = "4.5", features = ["derive"] }
+
+# Security
+landlock = "0.4"
+minisign-verify = "0.2"
+sha2 = "0.10"
+which = "8.0"
+sigstore = { version = "0.10", optional = true }
 
 # System tray (D-Bus StatusNotifierItem)
 ksni = { version = "0.3.2", features = ["blocking"] }
 
+[features]
+default = []
+sigstore = ["dep:sigstore"]
+
 [dev-dependencies]
 tempfile = "3"
+wiremock = "0.6"
+tokio-test = "0.4"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "filtering"
+harness = false
 
 [profile.release]
 lto = true
 codegen-units = 1
 strip = true
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

@@ -107,7 +107,7 @@ pub fn handle_toggle_completed(
 
 pub fn handle_uninstall_completed(
     app: &mut App,
-    result: Result<String, String>,
+    result: Result<String, (String, String)>,
 ) -> Task<Message> {
     match result {
         Ok(uuid) => {
@@ -116,7 +116,8 @@ pub fn handle_uninstall_completed(
             app.installed_modules.retain(|m| m.uuid.to_string() != uuid);
             app.push_notification("Module uninstalled".to_string(), NotificationKind::Success);
         }
-        Err(e) => {
+        Err((uuid, e)) => {
+            app.installed.uninstalling.remove(&uuid);
             app.push_notification(format!("Uninstall failed: {e}"), NotificationKind::Error);
         }
     }

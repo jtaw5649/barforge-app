@@ -1,9 +1,29 @@
 use iced::widget::button;
 use iced::{Background, Border, Theme};
 
-use super::{lighten, shadow_sm, AppTheme, RADIUS_MD, RADIUS_SM};
+use super::{darken, lighten, shadow_sm, AppTheme, RADIUS_MD, RADIUS_SM};
 
 type ButtonStyleFn = Box<dyn Fn(&Theme, button::Status) -> button::Style>;
+
+pub fn primary_small(theme: AppTheme) -> ButtonStyleFn {
+    Box::new(move |_, status| {
+        let background = match status {
+            button::Status::Hovered => lighten(theme.primary, 0.08),
+            button::Status::Pressed => darken(theme.primary, 0.05),
+            _ => theme.primary,
+        };
+
+        iced::widget::button::Style {
+            background: Some(Background::Color(background)),
+            text_color: theme.text_normal,
+            border: Border {
+                radius: super::RADIUS_SM.into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    })
+}
 
 pub fn primary(theme: AppTheme) -> ButtonStyleFn {
     Box::new(move |_, status| {

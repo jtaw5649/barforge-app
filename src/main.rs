@@ -1,5 +1,7 @@
+use clap::Parser;
 use std::io::IsTerminal;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use waybar_manager::cli::{Cli, Commands};
 
 fn setup_tracing() {
     let is_terminal = std::io::stderr().is_terminal();
@@ -49,6 +51,17 @@ fn setup_panic_handler() {
 }
 
 fn main() -> iced::Result {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Some(Commands::InternalSandboxExec { script, module_dir }) => {
+            Cli::run_sandbox_exec(script, module_dir);
+        }
+        Some(Commands::Gui) | None => run_gui(),
+    }
+}
+
+fn run_gui() -> iced::Result {
     setup_tracing();
     setup_panic_handler();
 

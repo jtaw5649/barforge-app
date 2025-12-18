@@ -172,6 +172,10 @@ impl AppTheme {
         }
     }
 
+    pub fn success_muted(&self) -> Color {
+        with_alpha(self.success, 0.15)
+    }
+
     pub fn from_mode(mode: ThemeMode, system_is_dark: bool) -> Self {
         match mode {
             ThemeMode::Dark => Self::dark(),

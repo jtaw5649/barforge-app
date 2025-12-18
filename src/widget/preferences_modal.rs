@@ -10,6 +10,51 @@ use crate::theme::{
     RADIUS_LG, RADIUS_MD, RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XL, SPACE_XS,
 };
 
+fn error_modal<'a>(message: &'a str, theme: &'a AppTheme) -> Element<'a, Message> {
+    let theme_copy = *theme;
+
+    let backdrop = container(Space::new())
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .style(move |_: &iced::Theme| iced::widget::container::Style {
+            background: Some(Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+            ..Default::default()
+        });
+
+    let content = column![
+        text("Error").size(FONT_LG).color(theme.danger),
+        Space::new().height(SPACE_MD),
+        text(message).size(FONT_MD).color(theme.text_normal),
+        Space::new().height(SPACE_LG),
+        button(text("Close").size(FONT_SM))
+            .on_press(Message::ClosePreferences)
+            .style(btn_style::primary(*theme))
+            .padding([SPACE_SM, SPACE_LG]),
+    ]
+    .align_x(Alignment::Center)
+    .width(Length::Fill);
+
+    let modal = container(content)
+        .padding(SPACE_XL)
+        .width(Length::Fixed(400.0))
+        .style(move |_: &iced::Theme| iced::widget::container::Style {
+            background: Some(Background::Color(theme_copy.bg_surface)),
+            border: Border {
+                color: theme_copy.border,
+                width: 1.0,
+                radius: RADIUS_LG.into(),
+            },
+            ..Default::default()
+        });
+
+    let centered = container(modal)
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .center(Length::Fill);
+
+    iced::widget::stack![backdrop, centered].into()
+}
+
 pub fn preferences_modal<'a>(
     module_name: &str,
     uuid: &str,
@@ -43,7 +88,12 @@ pub fn preferences_modal<'a>(
     .align_y(Alignment::Center)
     .width(Length::Fill);
 
-    let uuid_module = ModuleUuid::try_from(uuid).expect("preferences modal called with invalid uuid");
+    let uuid_module = match ModuleUuid::try_from(uuid) {
+        Ok(u) => u,
+        Err(_) => {
+            return error_modal("Invalid module identifier", theme);
+        }
+    };
 
     let fields: Vec<Element<Message>> = schema
         .fields

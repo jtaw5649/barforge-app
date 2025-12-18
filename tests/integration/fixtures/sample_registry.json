@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "modules": [
+    {
+      "uuid": "cpu-monitor@testauthor",
+      "name": "CPU Monitor",
+      "description": "Display CPU usage percentage",
+      "author": "testauthor",
+      "category": "system",
+      "icon": null,
+      "screenshot": null,
+      "repo_url": "https://github.com/testauthor/cpu-monitor",
+      "downloads": 150,
+      "version": "1.0.0",
+      "tags": ["cpu", "system", "monitor"]
+    },
+    {
+      "uuid": "memory-monitor@testauthor",
+      "name": "Memory Monitor",
+      "description": "Display RAM usage",
+      "author": "testauthor",
+      "category": "system",
+      "icon": null,
+      "screenshot": null,
+      "repo_url": "https://github.com/testauthor/memory-monitor",
+      "downloads": 200,
+      "version": "2.1.0",
+      "tags": ["memory", "ram", "system"]
+    }
+  ],
+  "categories": {
+    "system": {
+      "name": "System",
+      "icon": "computer-symbolic"
+    },
+    "media": {
+      "name": "Media",
+      "icon": "multimedia-symbolic"
+    }
+  }
+}

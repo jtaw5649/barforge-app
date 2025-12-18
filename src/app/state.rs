@@ -5,9 +5,10 @@ use std::time::{Duration, Instant};
 use iced::widget::image;
 
 use crate::domain::{InstalledModule, ModuleCategory, RegistryIndex};
+use crate::security::SandboxStatus;
 use crate::services::{
-    is_omarchy_available, load_omarchy_palette, load_settings, ModulePreferences, OmarchyPalette,
-    PreferencesSchema,
+    is_omarchy_available, load_omarchy_palette, load_settings, InstallStage, ModulePreferences,
+    OmarchyPalette, PreferencesSchema,
 };
 use crate::theme::{AppTheme, ThemeMode};
 
@@ -154,6 +155,7 @@ pub enum NotificationKind {
     #[default]
     Info,
     Success,
+    Warning,
     Error,
 }
 
@@ -184,6 +186,7 @@ pub enum ScreenshotState {
 pub struct ModuleDetailState {
     pub screenshot: ScreenshotState,
     pub installing: bool,
+    pub install_stage: Option<InstallStage>,
 }
 
 #[derive(Debug, Clone)]
@@ -231,6 +234,8 @@ pub struct App {
 
     pub tray_enabled: bool,
     pub tray_receiver: Option<Receiver<TrayEvent>>,
+
+    pub sandbox_status: Option<SandboxStatus>,
 }
 
 impl Default for App {
@@ -289,6 +294,7 @@ impl Default for App {
             last_spinner_update: Instant::now(),
             tray_enabled,
             tray_receiver,
+            sandbox_status: None,
         }
     }
 }

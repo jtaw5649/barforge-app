@@ -60,7 +60,7 @@ pub fn settings_screen(theme: &AppTheme, tray_enabled: bool) -> Element<'_, Mess
         ]
         .spacing(SPACE_XS),
     )
-    .style(cont_style::card(theme))
+    .style(cont_style::card(*theme))
     .padding(SPACE_LG)
     .width(Length::Fill);
 
@@ -96,7 +96,7 @@ pub fn settings_screen(theme: &AppTheme, tray_enabled: bool) -> Element<'_, Mess
         ]
         .spacing(SPACE_XS),
     )
-    .style(cont_style::card(theme))
+    .style(cont_style::card(*theme))
     .padding(SPACE_LG)
     .width(Length::Fill);
 
@@ -119,7 +119,7 @@ pub fn settings_screen(theme: &AppTheme, tray_enabled: bool) -> Element<'_, Mess
         ]
         .spacing(SPACE_XS),
     )
-    .style(cont_style::card(theme))
+    .style(cont_style::card(*theme))
     .padding(SPACE_LG)
     .width(Length::Fill);
 

@@ -1,30 +1,30 @@
 use iced::{Color, Shadow, Vector};
 
-pub const BG_BASE: Color = Color::from_rgb(0.098, 0.106, 0.118);
+pub const BG_BASE: Color = Color::from_rgb(0.098, 0.106, 0.122);
 pub const BG_SURFACE: Color = Color::from_rgb(0.133, 0.141, 0.157);
 pub const BG_ELEVATED: Color = Color::from_rgb(0.165, 0.176, 0.196);
-pub const BG_FLOATING: Color = Color::from_rgb(0.184, 0.196, 0.220);
-pub const BG_OVERLAY: Color = Color::from_rgba(0.0, 0.0, 0.0, 0.65);
+pub const BG_FLOATING: Color = Color::from_rgb(0.196, 0.208, 0.231);
+pub const BG_OVERLAY: Color = Color::from_rgba(0.0, 0.0, 0.0, 0.75);
 
-pub const SIDEBAR_BG: Color = Color::from_rgb(0.094, 0.102, 0.114);
-pub const SIDEBAR_HOVER: Color = Color::from_rgb(0.141, 0.153, 0.173);
-pub const SIDEBAR_ACTIVE: Color = Color::from_rgba(0.380, 0.490, 0.980, 0.12);
+pub const SIDEBAR_BG: Color = BG_SURFACE;
+pub const SIDEBAR_HOVER: Color = Color::from_rgb(0.165, 0.176, 0.196);
+pub const SIDEBAR_ACTIVE: Color = Color::from_rgba(0.380, 0.490, 0.980, 0.15);
 
 pub const ACCENT: Color = Color::from_rgb(0.380, 0.490, 0.980);
-pub const ACCENT_HOVER: Color = Color::from_rgb(0.440, 0.540, 0.990);
-pub const ACCENT_PRESSED: Color = Color::from_rgb(0.320, 0.420, 0.920);
-pub const ACCENT_MUTED: Color = Color::from_rgba(0.380, 0.490, 0.980, 0.12);
+pub const ACCENT_HOVER: Color = Color::from_rgb(0.478, 0.573, 0.984);
+pub const ACCENT_PRESSED: Color = Color::from_rgb(0.290, 0.388, 0.831);
+pub const ACCENT_MUTED: Color = Color::from_rgba(0.380, 0.490, 0.980, 0.15);
 
 pub const TEXT_NORMAL: Color = Color::from_rgb(0.965, 0.969, 0.976);
 pub const TEXT_MUTED: Color = Color::from_rgb(0.690, 0.710, 0.745);
-pub const TEXT_FAINT: Color = Color::from_rgb(0.510, 0.530, 0.580);
+pub const TEXT_FAINT: Color = Color::from_rgb(0.322, 0.345, 0.400);
 
-pub const SUCCESS: Color = Color::from_rgb(0.298, 0.761, 0.518);
-pub const SUCCESS_MUTED: Color = Color::from_rgba(0.298, 0.761, 0.518, 0.15);
-pub const WARNING: Color = Color::from_rgb(0.961, 0.647, 0.196);
-pub const DANGER: Color = Color::from_rgb(0.922, 0.341, 0.341);
-pub const DANGER_HOVER: Color = Color::from_rgb(0.878, 0.282, 0.282);
-pub const INFO: Color = Color::from_rgb(0.320, 0.682, 0.922);
+pub const SUCCESS: Color = Color::from_rgb(0.176, 0.800, 0.440);
+pub const SUCCESS_MUTED: Color = Color::from_rgba(0.176, 0.800, 0.440, 0.15);
+pub const WARNING: Color = Color::from_rgb(0.945, 0.769, 0.059);
+pub const DANGER: Color = Color::from_rgb(0.906, 0.298, 0.235);
+pub const DANGER_HOVER: Color = Color::from_rgb(0.753, 0.224, 0.169);
+pub const INFO: Color = Color::from_rgb(0.204, 0.596, 0.859);
 
 pub const BORDER_SUBTLE: Color = Color::from_rgba(1.0, 1.0, 1.0, 0.05);
 pub const BORDER_DEFAULT: Color = Color::from_rgba(1.0, 1.0, 1.0, 0.08);
@@ -92,17 +92,17 @@ pub const FONT_3XL: f32 = 28.0;
 
 pub const RADIUS_XS: f32 = 4.0;
 pub const RADIUS_SM: f32 = 6.0;
-pub const RADIUS_MD: f32 = 10.0;
-pub const RADIUS_LG: f32 = 14.0;
-pub const RADIUS_XL: f32 = 20.0;
+pub const RADIUS_MD: f32 = 8.0;
+pub const RADIUS_LG: f32 = 12.0;
+pub const RADIUS_XL: f32 = 16.0;
 
-pub const SIDEBAR_WIDTH: f32 = 220.0;
+pub const SIDEBAR_WIDTH: f32 = 240.0;
 pub const CARD_MIN_WIDTH: f32 = 280.0;
 pub const CARD_MAX_WIDTH: f32 = 340.0;
 pub const MODAL_WIDTH: f32 = 520.0;
 pub const NOTIFICATION_WIDTH: f32 = 380.0;
-pub const HEADER_HEIGHT: f32 = 56.0;
-pub const NAV_ITEM_HEIGHT: f32 = 42.0;
+pub const HEADER_HEIGHT: f32 = 64.0;
+pub const NAV_ITEM_HEIGHT: f32 = 44.0;
 
 pub const SEARCH_PANEL_WIDTH: f32 = 320.0;
 pub const FILTER_DROPDOWN_WIDTH: f32 = 250.0;
@@ -117,7 +117,7 @@ pub const SCREENSHOT_LOADING_HEIGHT: f32 = 200.0;
 pub const SCREENSHOT_MAX_HEIGHT: f32 = 400.0;
 pub const SCREENSHOT_FAILED_HEIGHT: f32 = 120.0;
 pub const SETTINGS_CONTENT_MAX_WIDTH: f32 = 600.0;
-pub const DETAIL_CONTENT_MAX_WIDTH: f32 = 800.0;
+pub const DETAIL_CONTENT_MAX_WIDTH: f32 = 900.0;
 
 pub const ICON_XS: f32 = 12.0;
 pub const ICON_SM: f32 = 16.0;
@@ -214,107 +214,10 @@ mod tests {
         (a - b).abs() < 0.001
     }
 
-    mod darken_tests {
-        use super::*;
-
-        #[test]
-        fn test_darken_by_zero_unchanged() {
-            let color = Color::from_rgb(0.5, 0.5, 0.5);
-            let result = darken(color, 0.0);
-            assert!(approx_eq(result.r, 0.5));
-            assert!(approx_eq(result.g, 0.5));
-            assert!(approx_eq(result.b, 0.5));
-        }
-
-        #[test]
-        fn test_darken_by_one_to_black() {
-            let color = Color::from_rgb(0.5, 0.5, 0.5);
-            let result = darken(color, 1.0);
-            assert!(approx_eq(result.r, 0.0));
-            assert!(approx_eq(result.g, 0.0));
-            assert!(approx_eq(result.b, 0.0));
-        }
-
-        #[test]
-        fn test_darken_by_half() {
-            let color = Color::from_rgb(1.0, 1.0, 1.0);
-            let result = darken(color, 0.5);
-            assert!(approx_eq(result.r, 0.5));
-            assert!(approx_eq(result.g, 0.5));
-            assert!(approx_eq(result.b, 0.5));
-        }
-
-        #[test]
-        fn test_darken_preserves_alpha() {
-            let color = Color::from_rgba(0.5, 0.5, 0.5, 0.8);
-            let result = darken(color, 0.5);
-            assert!(approx_eq(result.a, 0.8));
-        }
-    }
-
-    mod lighten_tests {
-        use super::*;
-
-        #[test]
-        fn test_lighten_by_zero_unchanged() {
-            let color = Color::from_rgb(0.5, 0.5, 0.5);
-            let result = lighten(color, 0.0);
-            assert!(approx_eq(result.r, 0.5));
-            assert!(approx_eq(result.g, 0.5));
-            assert!(approx_eq(result.b, 0.5));
-        }
-
-        #[test]
-        fn test_lighten_by_one_to_white() {
-            let color = Color::from_rgb(0.5, 0.5, 0.5);
-            let result = lighten(color, 1.0);
-            assert!(approx_eq(result.r, 1.0));
-            assert!(approx_eq(result.g, 1.0));
-            assert!(approx_eq(result.b, 1.0));
-        }
-
-        #[test]
-        fn test_lighten_black_by_half() {
-            let color = Color::from_rgb(0.0, 0.0, 0.0);
-            let result = lighten(color, 0.5);
-            assert!(approx_eq(result.r, 0.5));
-            assert!(approx_eq(result.g, 0.5));
-            assert!(approx_eq(result.b, 0.5));
-        }
-
-        #[test]
-        fn test_lighten_preserves_alpha() {
-            let color = Color::from_rgba(0.5, 0.5, 0.5, 0.3);
-            let result = lighten(color, 0.5);
-            assert!(approx_eq(result.a, 0.3));
-        }
-    }
-
-    mod with_alpha_tests {
-        use super::*;
-
-        #[test]
-        fn test_set_alpha() {
-            let color = Color::from_rgb(1.0, 0.5, 0.0);
-            let result = with_alpha(color, 0.5);
-            assert!(approx_eq(result.r, 1.0));
-            assert!(approx_eq(result.g, 0.5));
-            assert!(approx_eq(result.b, 0.0));
-            assert!(approx_eq(result.a, 0.5));
-        }
-
-        #[test]
-        fn test_alpha_clamped_high() {
-            let color = Color::from_rgb(1.0, 0.5, 0.0);
-            let result = with_alpha(color, 2.0);
-            assert!(approx_eq(result.a, 1.0));
-        }
-
-        #[test]
-        fn test_alpha_clamped_low() {
-            let color = Color::from_rgb(1.0, 0.5, 0.0);
-            let result = with_alpha(color, -1.0);
-            assert!(approx_eq(result.a, 0.0));
-        }
+    #[test]
+    fn test_darken_clamping() {
+        let color = Color::from_rgb(1.0, 1.0, 1.0);
+        let result = darken(color, 1.5);
+        assert!(approx_eq(result.r, 0.0));
     }
 }

@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use super::{ModuleCategory, ModulePosition, ModuleUuid, ModuleVersion};
+use crate::{ModuleCategory, ModuleUuid, ModuleVersion};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RegistryModule {
     pub uuid: ModuleUuid,
     pub name: String,
@@ -26,6 +26,8 @@ pub struct RegistryModule {
     pub verified_author: bool,
     #[serde(default)]
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub checksum: Option<String>,
 }
 
 impl RegistryModule {
@@ -54,46 +56,16 @@ impl RegistryModule {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InstalledModule {
-    pub uuid: ModuleUuid,
-    pub version: ModuleVersion,
-    pub install_path: PathBuf,
-    pub enabled: bool,
-    pub waybar_module_name: String,
-    pub has_preferences: bool,
-    #[serde(default = "default_installed_at")]
-    pub installed_at: chrono::DateTime<chrono::Utc>,
-    #[serde(default)]
-    pub registry_version: Option<ModuleVersion>,
-    #[serde(default)]
-    pub position: Option<ModulePosition>,
-}
-
-fn default_installed_at() -> chrono::DateTime<chrono::Utc> {
-    chrono::Utc::now()
-}
-
-impl InstalledModule {
-    pub fn is_custom_module(&self) -> bool {
-        self.waybar_module_name.starts_with("custom/")
-    }
-
-    pub fn has_update(&self) -> bool {
-        self.registry_version
-            .as_ref()
-            .is_some_and(|registry_ver| registry_ver > &self.version)
-    }
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RegistryIndex {
     pub version: u32,
     pub modules: Vec<RegistryModule>,
     pub categories: HashMap<String, CategoryInfo>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CategoryInfo {
     #[serde(default)]
     pub id: Option<String>,
@@ -118,7 +90,6 @@ impl RegistryIndex {
             .filter(|m| m.category == category)
             .collect()
     }
-
 
     pub fn find_by_uuid(&self, uuid: &str) -> Option<&RegistryModule> {
         self.modules.iter().find(|m| m.uuid.to_string() == uuid)
@@ -153,6 +124,7 @@ mod tests {
             rating: None,
             verified_author: false,
             tags: Vec::new(),
+            checksum: None,
         }
     }
 
@@ -160,32 +132,32 @@ mod tests {
         use super::*;
 
         #[test]
-        fn test_matches_search_by_name() {
+        fn matches_search_by_name() {
             let module = create_test_registry_module("weather-wttr");
             assert!(module.matches_search("weather"));
             assert!(module.matches_search("WEATHER"));
         }
 
         #[test]
-        fn test_matches_search_by_description() {
+        fn matches_search_by_description() {
             let module = create_test_registry_module("test");
             assert!(module.matches_search("test module"));
         }
 
         #[test]
-        fn test_matches_search_by_author() {
+        fn matches_search_by_author() {
             let module = create_test_registry_module("test");
             assert!(module.matches_search("test-author"));
         }
 
         #[test]
-        fn test_matches_search_no_match() {
+        fn matches_search_no_match() {
             let module = create_test_registry_module("test");
             assert!(!module.matches_search("nonexistent"));
         }
 
         #[test]
-        fn test_matches_search_by_tag() {
+        fn matches_search_by_tag() {
             let mut module = create_test_registry_module("test");
             module.tags = vec!["weather".to_string(), "forecast".to_string()];
             assert!(module.matches_search("forecast"));
@@ -193,7 +165,7 @@ mod tests {
         }
 
         #[test]
-        fn test_deserialize_with_tags() {
+        fn deserialize_with_tags() {
             let json = r#"{
                 "uuid": "test@dev",
                 "name": "Test",
@@ -211,7 +183,7 @@ mod tests {
         }
 
         #[test]
-        fn test_deserialize_without_tags_defaults_empty() {
+        fn deserialize_without_tags_defaults_empty() {
             let json = r#"{
                 "uuid": "test@dev",
                 "name": "Test",
@@ -228,14 +200,14 @@ mod tests {
         }
 
         #[test]
-        fn test_formatted_downloads_under_thousand() {
+        fn formatted_downloads_under_thousand() {
             let mut module = create_test_registry_module("test");
             module.downloads = 500;
             assert_eq!(module.formatted_downloads(), "500");
         }
 
         #[test]
-        fn test_formatted_downloads_thousands() {
+        fn formatted_downloads_thousands() {
             let mut module = create_test_registry_module("test");
             module.downloads = 1_500;
             assert_eq!(module.formatted_downloads(), "1.5k");
@@ -244,108 +216,24 @@ mod tests {
         }
 
         #[test]
-        fn test_formatted_downloads_millions() {
+        fn formatted_downloads_millions() {
             let mut module = create_test_registry_module("test");
             module.downloads = 1_500_000;
             assert_eq!(module.formatted_downloads(), "1.5M");
         }
 
         #[test]
-        fn test_truncated_description_short() {
+        fn truncated_description_short() {
             let mut module = create_test_registry_module("test");
             module.description = "Short desc".to_string();
             assert_eq!(module.truncated_description(100), "Short desc");
         }
 
         #[test]
-        fn test_truncated_description_long() {
+        fn truncated_description_long() {
             let mut module = create_test_registry_module("test");
             module.description = "This is a very long description that should be truncated".to_string();
             assert_eq!(module.truncated_description(20), "This is a very lo...");
-        }
-    }
-
-    mod installed_module {
-        use super::*;
-
-        #[test]
-        fn test_is_custom_module_true() {
-            let module = InstalledModule {
-                uuid: create_test_uuid("weather"),
-                version: create_test_version(),
-                install_path: PathBuf::from("/test"),
-                enabled: true,
-                waybar_module_name: "custom/weather".to_string(),
-                has_preferences: false,
-                installed_at: chrono::Utc::now(),
-                registry_version: None,
-                position: None,
-            };
-            assert!(module.is_custom_module());
-        }
-
-        #[test]
-        fn test_is_custom_module_false() {
-            let module = InstalledModule {
-                uuid: create_test_uuid("clock"),
-                version: create_test_version(),
-                install_path: PathBuf::from("/test"),
-                enabled: true,
-                waybar_module_name: "clock".to_string(),
-                has_preferences: false,
-                installed_at: chrono::Utc::now(),
-                registry_version: None,
-                position: None,
-            };
-            assert!(!module.is_custom_module());
-        }
-
-        #[test]
-        fn test_has_update_true_when_newer_version() {
-            let module = InstalledModule {
-                uuid: create_test_uuid("test"),
-                version: ModuleVersion::try_from("1.0.0").unwrap(),
-                install_path: PathBuf::from("/test"),
-                enabled: true,
-                waybar_module_name: "custom/test".to_string(),
-                has_preferences: false,
-                installed_at: chrono::Utc::now(),
-                registry_version: Some(ModuleVersion::try_from("2.0.0").unwrap()),
-                position: None,
-            };
-            assert!(module.has_update());
-        }
-
-        #[test]
-        fn test_has_update_false_when_same_version() {
-            let module = InstalledModule {
-                uuid: create_test_uuid("test"),
-                version: ModuleVersion::try_from("1.0.0").unwrap(),
-                install_path: PathBuf::from("/test"),
-                enabled: true,
-                waybar_module_name: "custom/test".to_string(),
-                has_preferences: false,
-                installed_at: chrono::Utc::now(),
-                registry_version: Some(ModuleVersion::try_from("1.0.0").unwrap()),
-                position: None,
-            };
-            assert!(!module.has_update());
-        }
-
-        #[test]
-        fn test_has_update_false_when_no_registry_version() {
-            let module = InstalledModule {
-                uuid: create_test_uuid("test"),
-                version: ModuleVersion::try_from("1.0.0").unwrap(),
-                install_path: PathBuf::from("/test"),
-                enabled: true,
-                waybar_module_name: "custom/test".to_string(),
-                has_preferences: false,
-                installed_at: chrono::Utc::now(),
-                registry_version: None,
-                position: None,
-            };
-            assert!(!module.has_update());
         }
     }
 
@@ -373,14 +261,14 @@ mod tests {
         }
 
         #[test]
-        fn test_search_empty_query_returns_all() {
+        fn search_empty_query_returns_all() {
             let index = create_test_index();
             let results = index.search("");
             assert_eq!(results.len(), 3);
         }
 
         #[test]
-        fn test_search_filters_by_name() {
+        fn search_filters_by_name() {
             let index = create_test_index();
             let results = index.search("weather");
             assert_eq!(results.len(), 1);
@@ -388,16 +276,15 @@ mod tests {
         }
 
         #[test]
-        fn test_by_category() {
+        fn by_category_filters_correctly() {
             let index = create_test_index();
             let results = index.by_category(ModuleCategory::Hardware);
             assert_eq!(results.len(), 1);
             assert_eq!(results[0].name, "cpu-monitor");
         }
 
-
         #[test]
-        fn test_find_by_uuid_existing() {
+        fn find_by_uuid_existing() {
             let index = create_test_index();
             let result = index.find_by_uuid("weather-wttr@test");
             assert!(result.is_some());
@@ -405,14 +292,14 @@ mod tests {
         }
 
         #[test]
-        fn test_find_by_uuid_not_found() {
+        fn find_by_uuid_not_found() {
             let index = create_test_index();
             let result = index.find_by_uuid("nonexistent@test");
             assert!(result.is_none());
         }
 
         #[test]
-        fn test_by_category_empty() {
+        fn by_category_empty_when_no_match() {
             let index = create_test_index();
             let results = index.by_category(ModuleCategory::Weather);
             assert!(results.is_empty());

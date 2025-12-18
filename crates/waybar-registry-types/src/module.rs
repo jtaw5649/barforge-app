@@ -17,7 +17,9 @@ pub enum ModuleUuidError {
     PathTraversalAttempt,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// Module UUID in format "name@namespace"
+#[derive(Debug, Clone, PartialEq, Eq, Hash, ts_rs::TS)]
+#[ts(export, as = "String")]
 pub struct ModuleUuid {
     name: String,
     namespace: String,
@@ -92,7 +94,9 @@ impl fmt::Display for ModuleUuid {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+/// Semantic version (major.minor.patch)
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export, as = "String")]
 #[serde(transparent)]
 pub struct ModuleVersion(semver::Version);
 
@@ -132,59 +136,59 @@ mod tests {
         use super::*;
 
         #[test]
-        fn test_module_uuid_from_valid_string() {
+        fn parses_valid_string() {
             let uuid = ModuleUuid::try_from("weather-wttr@waybar-modules").unwrap();
             assert_eq!(uuid.name(), "weather-wttr");
             assert_eq!(uuid.namespace(), "waybar-modules");
         }
 
         #[test]
-        fn test_module_uuid_to_string() {
+        fn formats_to_string() {
             let uuid = ModuleUuid::try_from("my-module@my-namespace").unwrap();
             assert_eq!(uuid.to_string(), "my-module@my-namespace");
         }
 
         #[test]
-        fn test_module_uuid_missing_at_symbol_fails() {
+        fn rejects_missing_at_symbol() {
             let result = ModuleUuid::try_from("invalid-uuid");
-            assert!(result.is_err());
+            assert!(matches!(result, Err(ModuleUuidError::MissingAtSymbol)));
         }
 
         #[test]
-        fn test_module_uuid_empty_name_fails() {
+        fn rejects_empty_name() {
             let result = ModuleUuid::try_from("@namespace");
-            assert!(result.is_err());
+            assert!(matches!(result, Err(ModuleUuidError::EmptyName)));
         }
 
         #[test]
-        fn test_module_uuid_empty_namespace_fails() {
+        fn rejects_empty_namespace() {
             let result = ModuleUuid::try_from("name@");
-            assert!(result.is_err());
+            assert!(matches!(result, Err(ModuleUuidError::EmptyNamespace)));
         }
 
         #[test]
-        fn test_module_uuid_multiple_at_symbols_uses_first() {
+        fn uses_first_at_symbol_when_multiple() {
             let uuid = ModuleUuid::try_from("name@namespace@extra").unwrap();
             assert_eq!(uuid.name(), "name");
             assert_eq!(uuid.namespace(), "namespace@extra");
         }
 
         #[test]
-        fn test_module_uuid_equality() {
+        fn equality_works() {
             let uuid1 = ModuleUuid::try_from("test@ns").unwrap();
             let uuid2 = ModuleUuid::try_from("test@ns").unwrap();
             assert_eq!(uuid1, uuid2);
         }
 
         #[test]
-        fn test_module_uuid_inequality() {
+        fn inequality_works() {
             let uuid1 = ModuleUuid::try_from("test@ns1").unwrap();
             let uuid2 = ModuleUuid::try_from("test@ns2").unwrap();
             assert_ne!(uuid1, uuid2);
         }
 
         #[test]
-        fn test_module_uuid_hash() {
+        fn hashes_consistently() {
             use std::collections::HashSet;
             let mut set = HashSet::new();
             set.insert(ModuleUuid::try_from("a@b").unwrap());
@@ -193,38 +197,38 @@ mod tests {
         }
 
         #[test]
-        fn test_module_uuid_clone() {
+        fn clones_correctly() {
             let uuid = ModuleUuid::try_from("test@ns").unwrap();
             let cloned = uuid.clone();
             assert_eq!(uuid, cloned);
         }
 
         #[test]
-        fn test_module_uuid_rejects_forward_slash() {
+        fn rejects_forward_slash() {
             let result = ModuleUuid::try_from("test/../escape@ns");
             assert!(matches!(result, Err(ModuleUuidError::InvalidCharacter)));
         }
 
         #[test]
-        fn test_module_uuid_rejects_backslash() {
+        fn rejects_backslash() {
             let result = ModuleUuid::try_from("test\\escape@ns");
             assert!(matches!(result, Err(ModuleUuidError::InvalidCharacter)));
         }
 
         #[test]
-        fn test_module_uuid_rejects_null_byte() {
+        fn rejects_null_byte() {
             let result = ModuleUuid::try_from("test\0escape@ns");
             assert!(matches!(result, Err(ModuleUuidError::InvalidCharacter)));
         }
 
         #[test]
-        fn test_module_uuid_rejects_parent_dir_reference() {
+        fn rejects_parent_dir_reference() {
             let result = ModuleUuid::try_from("..@ns");
             assert!(matches!(result, Err(ModuleUuidError::PathTraversalAttempt)));
         }
 
         #[test]
-        fn test_module_uuid_namespace_rejects_path_chars() {
+        fn rejects_path_chars_in_namespace() {
             let result = ModuleUuid::try_from("test@ns/evil");
             assert!(matches!(result, Err(ModuleUuidError::InvalidCharacter)));
         }
@@ -234,7 +238,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn test_module_version_from_semver_string() {
+        fn parses_semver_string() {
             let version = ModuleVersion::try_from("1.2.3").unwrap();
             assert_eq!(version.major(), 1);
             assert_eq!(version.minor(), 2);
@@ -242,19 +246,19 @@ mod tests {
         }
 
         #[test]
-        fn test_module_version_to_string() {
+        fn formats_to_string() {
             let version = ModuleVersion::try_from("2.0.1").unwrap();
             assert_eq!(version.to_string(), "2.0.1");
         }
 
         #[test]
-        fn test_module_version_invalid_format_fails() {
+        fn rejects_invalid_format() {
             let result = ModuleVersion::try_from("not-a-version");
             assert!(result.is_err());
         }
 
         #[test]
-        fn test_module_version_ordering() {
+        fn orders_correctly() {
             let v1 = ModuleVersion::try_from("1.0.0").unwrap();
             let v2 = ModuleVersion::try_from("1.0.1").unwrap();
             let v3 = ModuleVersion::try_from("1.1.0").unwrap();
@@ -266,20 +270,20 @@ mod tests {
         }
 
         #[test]
-        fn test_module_version_equality() {
+        fn equality_works() {
             let v1 = ModuleVersion::try_from("1.2.3").unwrap();
             let v2 = ModuleVersion::try_from("1.2.3").unwrap();
             assert_eq!(v1, v2);
         }
 
         #[test]
-        fn test_module_version_with_prerelease() {
+        fn parses_prerelease() {
             let version = ModuleVersion::try_from("1.0.0-alpha.1").unwrap();
             assert_eq!(version.major(), 1);
         }
 
         #[test]
-        fn test_module_version_prerelease_ordering() {
+        fn orders_prerelease_correctly() {
             let alpha = ModuleVersion::try_from("1.0.0-alpha").unwrap();
             let beta = ModuleVersion::try_from("1.0.0-beta").unwrap();
             let release = ModuleVersion::try_from("1.0.0").unwrap();

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.waybar.Manager</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Waybar Manager</name>
+  <summary>Browse, install, and manage waybar modules</summary>
+  <description>
+    <p>
+      Waybar Manager is a graphical application for discovering, installing,
+      and managing custom modules for Waybar, the highly customizable status bar
+      for Wayland compositors.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Browse a curated registry of waybar modules</li>
+      <li>One-click installation of modules with automatic config merging</li>
+      <li>Enable, disable, and uninstall modules easily</li>
+      <li>Configure module preferences through a friendly interface</li>
+      <li>Dark theme optimized for desktop integration</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">org.waybar.Manager.desktop</launchable>
+  <url type="homepage">https://github.com/jtaw5649/waybar-manager</url>
+  <url type="bugtracker">https://github.com/jtaw5649/waybar-manager/issues</url>
+  <url type="vcs-browser">https://github.com/jtaw5649/waybar-manager</url>
+  <developer id="io.github.jtaw5649">
+    <name>jtaw</name>
+  </developer>
+  <provides>
+    <binary>waybar-manager-bin</binary>
+  </provides>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </recommends>
+  <categories>
+    <category>Utility</category>
+    <category>Settings</category>
+  </categories>
+  <keywords>
+    <keyword>waybar</keyword>
+    <keyword>modules</keyword>
+    <keyword>status bar</keyword>
+    <keyword>wayland</keyword>
+    <keyword>customization</keyword>
+  </keywords>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main browse view showing available modules</caption>
+      <image>https://raw.githubusercontent.com/jtaw5649/waybar-manager/master/screenshots/browse.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.3.1" date="2025-12-18">
+      <description>
+        <p>Security infrastructure for production release</p>
+        <ul>
+          <li>Landlock sandbox for script isolation</li>
+          <li>Minisign Ed25519 signature verification</li>
+          <li>Revocation checking with fail-closed defaults</li>
+          <li>Dependency checking for binaries and Python modules</li>
+          <li>Streaming downloads with 50MB size limit</li>
+          <li>Algebraic path normalization preventing TOCTOU attacks</li>
+          <li>SecureInstaller orchestrating verified package installation</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.2.3" date="2025-12-18">
+      <description>
+        <p>Code quality and test infrastructure improvements</p>
+        <ul>
+          <li>Comprehensive integration test suite</li>
+          <li>Improved code organization with handler extraction</li>
+          <li>Enhanced CI/CD with security scanning and coverage</li>
+          <li>TypeScript type generation for API consumers</li>
+          <li>Performance benchmarks</li>
+          <li>Proper error handling when registry unavailable</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.2.2" date="2025-12-17">
+      <description>
+        <p>Documentation and installation improvements</p>
+        <ul>
+          <li>Add pre-built binary installer via cargo-dist</li>
+          <li>Add Flatpak local build instructions</li>
+          <li>Improve README documentation</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.2.1" date="2025-01-01">
+      <description>
+        <p>Bug fixes and stability improvements</p>
+        <ul>
+          <li>Fix panic in preferences modal</li>
+          <li>Fix uninstall not cleaning CSS and config</li>
+          <li>Fix module update preserving enabled state</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+</component>

@@ -11,6 +11,7 @@ const SEARCH_SVG: &[u8] = include_bytes!("../assets/icons/ui/search.svg");
 const DOWNLOAD_SVG: &[u8] = include_bytes!("../assets/icons/ui/download.svg");
 const CHECK_SVG: &[u8] = include_bytes!("../assets/icons/ui/check.svg");
 const ERROR_SVG: &[u8] = include_bytes!("../assets/icons/ui/error.svg");
+const WARNING_SVG: &[u8] = include_bytes!("../assets/icons/ui/warning.svg");
 const INFO_SVG: &[u8] = include_bytes!("../assets/icons/ui/info.svg");
 const APP_LOGO_SVG: &[u8] = include_bytes!("../assets/icons/ui/app-logo.svg");
 const SUN_SVG: &[u8] = include_bytes!("../assets/icons/ui/sun.svg");
@@ -21,6 +22,8 @@ const LIST_SVG: &[u8] = include_bytes!("../assets/icons/ui/list.svg");
 const STAR_SVG: &[u8] = include_bytes!("../assets/icons/ui/star.svg");
 const STAR_HALF_SVG: &[u8] = include_bytes!("../assets/icons/ui/star-half.svg");
 const STAR_EMPTY_SVG: &[u8] = include_bytes!("../assets/icons/ui/star-empty.svg");
+const ARROW_UP_SVG: &[u8] = include_bytes!("../assets/icons/ui/arrow-up.svg");
+const ARROW_DOWN_SVG: &[u8] = include_bytes!("../assets/icons/ui/arrow-down.svg");
 const OMARCHY_PNG: &[u8] = include_bytes!("../assets/icons/ui/omarchy.png");
 
 static OMARCHY_HANDLE: Lazy<image::Handle> =
@@ -36,6 +39,7 @@ pub enum Icon {
     Download,
     Check,
     Error,
+    Warning,
     Info,
     AppLogo,
     Sun,
@@ -47,6 +51,8 @@ pub enum Icon {
     Star,
     StarHalf,
     StarEmpty,
+    ArrowUp,
+    ArrowDown,
 }
 
 impl Icon {
@@ -60,6 +66,7 @@ impl Icon {
             Icon::Download => Some(DOWNLOAD_SVG),
             Icon::Check => Some(CHECK_SVG),
             Icon::Error => Some(ERROR_SVG),
+            Icon::Warning => Some(WARNING_SVG),
             Icon::Info => Some(INFO_SVG),
             Icon::AppLogo => Some(APP_LOGO_SVG),
             Icon::Sun => Some(SUN_SVG),
@@ -70,6 +77,8 @@ impl Icon {
             Icon::Star => Some(STAR_SVG),
             Icon::StarHalf => Some(STAR_HALF_SVG),
             Icon::StarEmpty => Some(STAR_EMPTY_SVG),
+            Icon::ArrowUp => Some(ARROW_UP_SVG),
+            Icon::ArrowDown => Some(ARROW_DOWN_SVG),
             Icon::Omarchy => None,
         }
     }
