@@ -4,7 +4,7 @@ resolver = "2"
 
 [package]
 name = "waybar-manager"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2024"
 description = "Waybar Manager - browse, install, and manage waybar modules"
 license = "GPL-3.0-or-later"
@@ -57,6 +57,13 @@ ksni = { version = "0.3.2", features = ["blocking"] }
 
 [dev-dependencies]
 tempfile = "3"
+wiremock = "0.6"
+tokio-test = "0.4"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "filtering"
+harness = false
 
 [profile.release]
 lto = true

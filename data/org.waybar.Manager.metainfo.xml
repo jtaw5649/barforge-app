@@ -56,6 +56,19 @@
   </screenshots>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.2.3" date="2025-12-18">
+      <description>
+        <p>Code quality and test infrastructure improvements</p>
+        <ul>
+          <li>Comprehensive integration test suite</li>
+          <li>Improved code organization with handler extraction</li>
+          <li>Enhanced CI/CD with security scanning and coverage</li>
+          <li>TypeScript type generation for API consumers</li>
+          <li>Performance benchmarks</li>
+          <li>Proper error handling when registry unavailable</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.2" date="2025-12-17">
       <description>
         <p>Documentation and installation improvements</p>

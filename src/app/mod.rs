@@ -2,19 +2,14 @@ pub mod handlers;
 pub mod message;
 pub mod state;
 
-use std::time::Duration;
-
 use iced::widget::{button, column, container, pick_list, responsive, row, scrollable, stack, text, text_input, Space};
 use iced::{Alignment, Element, Length, Task, Theme};
 use iced_aw::Wrap;
 
 use crate::icons::Icon;
-use crate::security::validate_web_url;
 use crate::services::is_omarchy_available;
 use crate::tasks;
 use crate::theme::{darken, menu_style, pick_list_style, PickListColors, CARD_WIDTH, RADIUS_MD, SEARCH_PANEL_WIDTH, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_XS};
-
-use crate::tray::TrayEvent;
 use crate::widget::{confirmation_dialog, empty_state, empty_state_dynamic, empty_state_with_action, module_card, module_detail_screen, module_row, module_table, notification_toast, preferences_modal, settings_screen, sidebar, skeleton_card};
 
 pub use message::Message;
@@ -49,98 +44,21 @@ impl App {
 
             Message::ModuleClicked(_uuid) => Task::none(),
 
-            Message::InstallModule(uuid) => {
-                let uuid_str = uuid.to_string();
-                if self.installed_uuids.contains(&uuid_str) {
-                    self.push_notification(
-                        "Module already installed".to_string(),
-                        state::NotificationKind::Info,
-                    );
-                    self.module_detail.installing = false;
-                    return Task::none();
-                }
-
-                if let Some(registry) = &self.registry
-                    && let Some(module) = registry.find_by_uuid(&uuid_str)
-                {
-                    return tasks::install_module(
-                        uuid_str,
-                        module.name.clone(),
-                        module.version.clone(),
-                        module.repo_url.clone(),
-                    );
-                }
-
-                self.push_notification(
-                    "Module not found in registry".to_string(),
-                    state::NotificationKind::Error,
-                );
-                self.module_detail.installing = false;
-                Task::none()
-            }
+            Message::InstallModule(uuid) => handlers::handle_install_module(self, uuid),
 
             Message::ToggleModule { uuid, enabled } => {
-                let uuid_str = uuid.to_string();
-                self.installed.toggling.insert(uuid_str.clone());
-                tasks::toggle_module(uuid_str, enabled)
+                handlers::handle_toggle_module(self, uuid, enabled)
             }
 
             Message::SetModulePosition { uuid, section } => {
-                tasks::change_module_position(uuid.to_string(), section)
+                handlers::handle_set_module_position(uuid, section)
             }
 
-            Message::PositionChanged(result) => {
-                match result {
-                    Ok(uuid) => {
-                        if let Some(module) = self.installed_modules.iter().find(|m| m.uuid.to_string() == uuid) {
-                            let section_name = module
-                                .position
-                                .as_ref()
-                                .map(|p| format!("{}", p.section))
-                                .unwrap_or_else(|| "center".to_string());
-                            self.push_notification(
-                                format!("Moved to {}", section_name),
-                                state::NotificationKind::Success,
-                            );
-                        }
-                        return tasks::load_installed();
-                    }
-                    Err(e) => {
-                        self.push_notification(
-                            format!("Failed to change position: {e}"),
-                            state::NotificationKind::Error,
-                        );
-                    }
-                }
-                Task::none()
-            }
+            Message::PositionChanged(result) => handlers::handle_position_changed(self, result),
 
-            Message::UninstallModule(uuid) => {
-                let uuid_str = uuid.to_string();
-                self.installed.uninstalling.insert(uuid_str.clone());
-                tasks::uninstall_module(uuid_str)
-            }
+            Message::UninstallModule(uuid) => handlers::handle_uninstall_module(self, uuid),
 
-            Message::OpenPreferences(uuid) => {
-                let uuid_str = uuid.to_string();
-                if let Some(installed) = self.installed_modules.iter().find(|m| m.uuid == uuid) {
-                    let schema = crate::services::load_schema(&installed.install_path);
-                    if let Some(schema) = schema {
-                        let values = crate::services::load_preferences(&uuid_str);
-                        let merged = crate::services::preferences::merge_with_defaults(values, &schema);
-                        self.preferences.open_for = Some(uuid_str);
-                        self.preferences.schema = Some(schema);
-                        self.preferences.values = merged;
-                        self.preferences.module_name = installed.waybar_module_name.clone();
-                    } else {
-                        self.push_notification(
-                            "This module has no configurable preferences".to_string(),
-                            state::NotificationKind::Info,
-                        );
-                    }
-                }
-                Task::none()
-            }
+            Message::OpenPreferences(uuid) => handlers::handle_open_preferences(self, uuid),
 
             Message::InstalledSearchChanged(query) => {
                 handlers::handle_installed_search_changed(self, query)
@@ -148,10 +66,7 @@ impl App {
 
             Message::ClearInstalledSearch => handlers::handle_clear_installed_search(self),
 
-            Message::RefreshRegistry => {
-                self.browse.refreshing = true;
-                tasks::refresh_registry()
-            }
+            Message::RefreshRegistry => handlers::handle_refresh_registry(self),
 
             Message::RegistryLoaded(result) => handlers::handle_registry_loaded(self, result),
 
@@ -165,367 +80,87 @@ impl App {
 
             Message::UninstallCompleted(result) => handlers::handle_uninstall_completed(self, result),
 
-            Message::UpdateModule(uuid) => {
-                let uuid_str = uuid.to_string();
-                if let Some(_installed) = self.installed_modules.iter().find(|m| m.uuid == uuid)
-                    && let Some(registry) = &self.registry
-                    && let Some(registry_module) = registry.find_by_uuid(&uuid_str)
-                    && let Some(new_version) = &registry_module.version
-                {
-                    self.installed.updating.insert(uuid_str.clone());
-                    return tasks::update_module(
-                        uuid_str,
-                        registry_module.repo_url.clone(),
-                        new_version.clone(),
-                    );
-                }
-                self.push_notification(
-                    "Cannot update: module not found".to_string(),
-                    state::NotificationKind::Error,
-                );
-                Task::none()
-            }
+            Message::UpdateModule(uuid) => handlers::handle_update_module(self, uuid),
 
-            Message::UpdateAllModules => {
-                if self.installed.updating_all {
-                    return Task::none();
-                }
+            Message::UpdateAllModules => handlers::handle_update_all_modules(self),
 
-                let updates: Vec<_> = self
-                    .installed_modules
-                    .iter()
-                    .filter_map(|installed| {
-                        let uuid = installed.uuid.to_string();
-                        self.registry.as_ref().and_then(|registry| {
-                            registry
-                                .modules
-                                .iter()
-                                .find(|m| m.uuid.to_string() == uuid)
-                                .and_then(|reg_mod| {
-                                    reg_mod.version.as_ref().and_then(|new_ver| {
-                                        if new_ver > &installed.version {
-                                            Some((uuid, reg_mod.repo_url.clone(), new_ver.clone()))
-                                        } else {
-                                            None
-                                        }
-                                    })
-                                })
-                        })
-                    })
-                    .collect();
-
-                if updates.is_empty() {
-                    self.push_notification(
-                        "All modules are up to date".to_string(),
-                        state::NotificationKind::Info,
-                    );
-                    return Task::none();
-                }
-
-                self.installed.updating_all = true;
-                tasks::update_all_modules(updates)
-            }
-
-            Message::UpdateCompleted(result) => {
-                match result {
-                    Ok(updated_module) => {
-                        let uuid = updated_module.uuid.to_string();
-                        self.installed.updating.remove(&uuid);
-
-                        if let Some(existing) = self.installed_modules.iter_mut().find(|m| m.uuid.to_string() == uuid) {
-                            existing.version = updated_module.version;
-                            existing.registry_version = updated_module.registry_version;
-                        }
-
-                        self.push_notification(
-                            format!("Updated {}", updated_module.waybar_module_name),
-                            state::NotificationKind::Success,
-                        );
-                    }
-                    Err(e) => {
-                        self.push_notification(
-                            format!("Update failed: {e}"),
-                            state::NotificationKind::Error,
-                        );
-                    }
-                }
-                Task::none()
-            }
+            Message::UpdateCompleted(result) => handlers::handle_update_completed(self, result),
 
             Message::UpdateAllCompleted(result) => {
-                self.installed.updating_all = false;
-                match result {
-                    Ok(count) => {
-                        self.push_notification(
-                            format!("Updated {} module{}", count, if count == 1 { "" } else { "s" }),
-                            state::NotificationKind::Success,
-                        );
-                        return tasks::load_installed();
-                    }
-                    Err(e) => {
-                        self.push_notification(
-                            format!("Batch update failed: {e}"),
-                            state::NotificationKind::Error,
-                        );
-                    }
-                }
-                Task::none()
+                handlers::handle_update_all_completed(self, result)
             }
 
             Message::ShowNotification(message, kind) => {
-                self.push_notification(message, kind);
+                handlers::handle_show_notification(self, message, kind);
                 Task::none()
             }
 
-            Message::DismissNotification => {
-                if self.confirmation.pending_action.is_some() {
-                    self.confirmation.pending_action = None;
-                } else if matches!(self.screen, Screen::ModuleDetail(_)) {
-                    self.screen = Screen::Browse;
-                    self.module_detail.screenshot = state::ScreenshotState::NotLoaded;
-                    self.module_detail.installing = false;
-                } else {
-                    self.notifications.pop_front();
-                }
-                Task::none()
-            }
+            Message::DismissNotification => handlers::handle_dismiss_notification(self),
 
-            Message::Tick => {
-                if self.loading.is_loading() || self.module_detail.screenshot == ScreenshotState::Loading {
-                    self.advance_spinner();
-                }
-
-                self.notifications.retain(|notif| {
-                    notif.kind == state::NotificationKind::Error
-                        || notif.created_at.elapsed() <= Duration::from_secs(5)
-                });
-
-                self.apply_debounced_searches();
-
-                if let Some(tray_event) = self.poll_tray_events() {
-                    return match tray_event {
-                        TrayEvent::ShowWindow => Task::done(Message::TrayShowWindow),
-                        TrayEvent::CheckUpdates => Task::done(Message::TrayCheckUpdates),
-                        TrayEvent::Quit => Task::done(Message::TrayQuit),
-                    };
-                }
-
-                Task::none()
-            }
+            Message::Tick => handlers::handle_tick(self),
 
             Message::SystemThemeChanged(is_dark) => {
-                self.set_system_dark(is_dark);
-                Task::none()
+                handlers::handle_system_theme_changed(self, is_dark)
             }
 
-            Message::SetThemeMode(mode) => {
-                self.set_theme_mode(mode);
-                self.save_settings();
-                Task::none()
-            }
+            Message::SetThemeMode(mode) => handlers::handle_set_theme_mode(self, mode),
 
-            Message::OmarchyThemeChanged => {
-                if self.theme_mode == crate::theme::ThemeMode::Omarchy {
-                    let palette = crate::services::load_omarchy_palette();
-                    self.set_omarchy_palette(palette);
-                }
-                Task::none()
-            }
+            Message::OmarchyThemeChanged => handlers::handle_omarchy_theme_changed(self),
 
             Message::ScreenshotLoaded(result) => handlers::handle_screenshot_loaded(self, result),
 
-            Message::DetailInstallModule => {
-                if let Screen::ModuleDetail(ref uuid_str) = self.screen
-                    && let Ok(uuid) = crate::domain::ModuleUuid::try_from(uuid_str.as_str())
-                {
-                    self.module_detail.installing = true;
-                    return Task::done(Message::InstallModule(uuid));
-                }
-                Task::none()
-            }
+            Message::DetailInstallModule => handlers::handle_detail_install_module(self),
 
             Message::OpenRepoUrl(url) => {
-                match validate_web_url(&url) {
-                    Ok(()) => {
-                        if let Err(e) = open::that(&url) {
-                            tracing::warn!("Failed to open URL in browser: {e}");
-                        }
-                    }
-                    Err(e) => {
-                        self.push_notification(
-                            format!("Cannot open URL: {e}"),
-                            state::NotificationKind::Error,
-                        );
-                    }
-                }
+                handlers::handle_open_repo_url(self, url);
                 Task::none()
             }
 
             Message::RequestConfirmation(action) => {
-                self.confirmation.pending_action = Some(action);
+                handlers::handle_request_confirmation(self, action);
                 Task::none()
             }
 
-            Message::ConfirmAction => {
-                if let Some(action) = self.confirmation.pending_action.take() {
-                    match action {
-                        state::ConfirmationAction::UninstallModule { uuid, .. } => {
-                            self.installed.uninstalling.insert(uuid.clone());
-                            return tasks::uninstall_module(uuid);
-                        }
-                    }
-                }
-                Task::none()
-            }
+            Message::ConfirmAction => handlers::handle_confirm_action(self),
 
             Message::CancelConfirmation => {
-                self.confirmation.pending_action = None;
+                handlers::handle_cancel_confirmation(self);
                 Task::none()
             }
 
-            Message::ClearCache => tasks::clear_cache(),
+            Message::ClearCache => handlers::handle_clear_cache(),
 
             Message::CacheClearCompleted(result) => {
-                match result {
-                    Ok(()) => {
-                        self.push_notification("Cache cleared successfully".to_string(), state::NotificationKind::Success);
-                    }
-                    Err(e) => {
-                        self.push_notification(format!("Failed to clear cache: {e}"), state::NotificationKind::Error);
-                    }
-                }
+                handlers::handle_cache_clear_completed(self, result);
                 Task::none()
             }
 
-            Message::ResetSettings => tasks::reset_settings(),
+            Message::ResetSettings => handlers::handle_reset_settings(),
 
             Message::SettingsResetCompleted(result) => {
-                match result {
-                    Ok(()) => {
-                        self.push_notification("Settings reset successfully".to_string(), state::NotificationKind::Success);
-                    }
-                    Err(e) => {
-                        self.push_notification(format!("Failed to reset settings: {e}"), state::NotificationKind::Error);
-                    }
-                }
+                handlers::handle_settings_reset_completed(self, result);
                 Task::none()
             }
 
-            Message::ToggleTray(enabled) => {
-                self.tray_enabled = enabled;
-                self.save_settings();
+            Message::ToggleTray(enabled) => handlers::handle_toggle_tray(self, enabled),
 
-                if enabled && self.tray_receiver.is_none() {
-                    self.tray_receiver = crate::tray::init();
-                    self.push_notification(
-                        "Tray icon enabled".to_string(),
-                        state::NotificationKind::Success,
-                    );
-                } else if !enabled {
-                    crate::tray::shutdown();
-                    self.tray_receiver = None;
-                    self.push_notification(
-                        "Tray icon disabled".to_string(),
-                        state::NotificationKind::Info,
-                    );
-                }
+            Message::FocusSearch => handlers::handle_focus_search(self),
 
-                Task::none()
-            }
-
-            Message::FocusSearch => {
-                if !matches!(self.screen, Screen::Browse | Screen::Installed) {
-                    self.screen = Screen::Browse;
-                }
-                Task::none()
-            }
-
-            Message::EscapePressed => {
-                if self.preferences.open_for.is_some() {
-                    self.preferences.open_for = None;
-                    self.preferences.schema = None;
-                    self.preferences.values.clear();
-                } else if self.confirmation.pending_action.is_some() {
-                    self.confirmation.pending_action = None;
-                } else if matches!(self.screen, Screen::ModuleDetail(_)) {
-                    self.screen = Screen::Browse;
-                    self.module_detail.screenshot = state::ScreenshotState::NotLoaded;
-                    self.module_detail.installing = false;
-                } else if !self.browse.search_query.is_empty() && self.screen == Screen::Browse {
-                    self.browse.search_query.clear();
-                    self.browse.pending_search = None;
-                } else if !self.installed.search_query.is_empty() && self.screen == Screen::Installed {
-                    self.installed.search_query.clear();
-                    self.installed.pending_search = None;
-                } else {
-                    self.notifications.pop_front();
-                }
-                Task::none()
-            }
+            Message::EscapePressed => handlers::handle_escape_pressed(self),
 
             Message::PreferenceChanged(uuid, key, value) => {
-                let uuid_str = uuid.to_string();
-                if self.preferences.open_for.as_ref() == Some(&uuid_str) {
-                    self.preferences.values.insert(key, value);
-                    if let Err(e) = crate::services::save_preferences(&uuid_str, &self.preferences.values) {
-                        tracing::warn!("Failed to save preferences: {e}");
-                        self.push_notification(
-                            "Failed to save preferences".to_string(),
-                            state::NotificationKind::Error,
-                        );
-                    }
-                }
-                Task::none()
+                handlers::handle_preference_changed(self, uuid, key, value)
             }
 
-            Message::ClosePreferences => {
-                self.preferences.open_for = None;
-                self.preferences.schema = None;
-                self.preferences.values.clear();
-                Task::none()
-            }
+            Message::ClosePreferences => handlers::handle_close_preferences(self),
 
-            Message::ResetPreferences(uuid) => {
-                let uuid_str = uuid.to_string();
-                if let Some(schema) = &self.preferences.schema {
-                    let defaults = crate::services::preferences::get_default_preferences(schema);
-                    self.preferences.values = defaults.clone();
-                    match crate::services::save_preferences(&uuid_str, &defaults) {
-                        Ok(()) => {
-                            self.push_notification(
-                                "Preferences reset to defaults".to_string(),
-                                state::NotificationKind::Success,
-                            );
-                        }
-                        Err(e) => {
-                            tracing::warn!("Failed to save reset preferences: {e}");
-                            self.push_notification(
-                                "Failed to save preferences".to_string(),
-                                state::NotificationKind::Error,
-                            );
-                        }
-                    }
-                }
-                Task::none()
-            }
+            Message::ResetPreferences(uuid) => handlers::handle_reset_preferences(self, uuid),
 
-            Message::TrayShowWindow => {
-                Task::none()
-            }
+            Message::TrayShowWindow => handlers::handle_tray_show_window(),
 
-            Message::TrayCheckUpdates => {
-                self.screen = Screen::Updates;
-                self.push_notification(
-                    "Checking for updates...".to_string(),
-                    state::NotificationKind::Info,
-                );
-                tasks::load_registry()
-            }
+            Message::TrayCheckUpdates => handlers::handle_tray_check_updates(self),
 
-            Message::TrayQuit => {
-                crate::tray::shutdown();
-                std::process::exit(0);
-            }
+            Message::TrayQuit => handlers::handle_tray_quit(),
         }
     }
 

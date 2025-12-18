@@ -17,7 +17,9 @@ pub enum ModuleUuidError {
     PathTraversalAttempt,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// Module UUID in format "name@namespace"
+#[derive(Debug, Clone, PartialEq, Eq, Hash, ts_rs::TS)]
+#[ts(export, as = "String")]
 pub struct ModuleUuid {
     name: String,
     namespace: String,
@@ -92,7 +94,9 @@ impl fmt::Display for ModuleUuid {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+/// Semantic version (major.minor.patch)
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export, as = "String")]
 #[serde(transparent)]
 pub struct ModuleVersion(semver::Version);
 

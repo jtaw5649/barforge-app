@@ -1,6 +1,6 @@
 # Maintainer: jtaw5649 <213313463+jtaw5649@users.noreply.github.com>
 pkgname=waybar-manager
-pkgver=0.2.2
+pkgver=0.2.3
 pkgrel=1
 pkgdesc="Browse, install, and manage waybar modules"
 arch=('x86_64')

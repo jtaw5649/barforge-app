@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{ModuleCategory, ModuleUuid, ModuleVersion};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RegistryModule {
     pub uuid: ModuleUuid,
     pub name: String,
@@ -53,14 +54,16 @@ impl RegistryModule {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct RegistryIndex {
     pub version: u32,
     pub modules: Vec<RegistryModule>,
     pub categories: HashMap<String, CategoryInfo>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct CategoryInfo {
     #[serde(default)]
     pub id: Option<String>,
