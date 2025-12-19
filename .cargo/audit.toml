@@ -1,6 +1,7 @@
 [advisories]
 ignore = [
     # paste is unmaintained but not vulnerable - transitive dep from ksni and iced/rav1e
-    # Tracked upstream, no action we can take until dependencies update
     "RUSTSEC-2024-0436",
+    # rsa Marvin Attack (timing sidechannel) - transitive dep, local desktop app not exposed to network timing attacks
+    "RUSTSEC-2023-0071",
 ]
