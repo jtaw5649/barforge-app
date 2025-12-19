@@ -6,7 +6,11 @@ use crate::domain::ModuleUuid;
 use crate::security::SandboxStatus;
 use crate::services::{DepReport, InstallStage};
 
-pub fn handle_install_progress(app: &mut App, uuid: ModuleUuid, stage: InstallStage) -> Task<Message> {
+pub fn handle_install_progress(
+    app: &mut App,
+    uuid: ModuleUuid,
+    stage: InstallStage,
+) -> Task<Message> {
     if let crate::app::state::Screen::ModuleDetail(detail_uuid) = &app.screen
         && *detail_uuid == uuid.to_string()
     {

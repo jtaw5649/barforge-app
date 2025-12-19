@@ -15,16 +15,12 @@ use crate::services::{InstallParams, SecureInstaller};
 use super::waybar::{handle_css_injection, handle_css_removal};
 
 static DEFAULT_VERSION: Lazy<ModuleVersion> = Lazy::new(|| {
-    ModuleVersion::try_from("1.0.0").unwrap_or_else(|_| {
-        unreachable!("1.0.0 is always valid semver")
-    })
+    ModuleVersion::try_from("1.0.0")
+        .unwrap_or_else(|_| unreachable!("1.0.0 is always valid semver"))
 });
 
 pub fn toggle_module(uuid: String, enabled: bool) -> Task<Message> {
-    Task::perform(
-        toggle_module_async(uuid, enabled),
-        Message::ToggleCompleted,
-    )
+    Task::perform(toggle_module_async(uuid, enabled), Message::ToggleCompleted)
 }
 
 pub fn uninstall_module(uuid: String) -> Task<Message> {
@@ -46,7 +42,10 @@ pub fn update_module(uuid: String, repo_url: String, new_version: ModuleVersion)
 }
 
 pub fn update_all_modules(updates: Vec<(String, String, ModuleVersion)>) -> Task<Message> {
-    Task::perform(update_all_modules_async(updates), Message::UpdateAllCompleted)
+    Task::perform(
+        update_all_modules_async(updates),
+        Message::UpdateAllCompleted,
+    )
 }
 
 pub fn install_module(
@@ -104,8 +103,7 @@ async fn install_module_async(
         let content = tokio::fs::read_to_string(&state_path)
             .await
             .map_err(|e| format!("Failed to read state: {e}"))?;
-        serde_json::from_str(&content)
-            .map_err(|e| format!("Failed to parse state: {e}"))?
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse state: {e}"))?
     } else {
         Vec::new()
     };
@@ -264,13 +262,18 @@ async fn update_module_async(
             let with_module_config = if config_path.exists() {
                 if let Ok(module_config) = tokio::fs::read_to_string(&config_path).await {
                     let prefs = crate::services::preferences::load_preferences(&uuid);
-                    let module_config = waybar_config::substitute_preferences(&module_config, &prefs);
+                    let module_config =
+                        waybar_config::substitute_preferences(&module_config, &prefs);
                     let install_path_str = install_path.to_string_lossy();
-                    waybar_config::merge_module_config(&waybar_content, &module_config, &install_path_str)
-                        .unwrap_or_else(|e| {
-                            tracing::warn!("Failed to merge module config during update: {e}");
-                            waybar_content.clone()
-                        })
+                    waybar_config::merge_module_config(
+                        &waybar_content,
+                        &module_config,
+                        &install_path_str,
+                    )
+                    .unwrap_or_else(|e| {
+                        tracing::warn!("Failed to merge module config during update: {e}");
+                        waybar_content.clone()
+                    })
                 } else {
                     waybar_content.clone()
                 }
@@ -321,18 +324,14 @@ async fn update_all_modules_async(
 }
 
 fn parse_github_url(repo_url: &str) -> Result<(String, String), String> {
-    let url = repo_url
-        .trim_end_matches('/')
-        .trim_end_matches(".git");
+    let url = repo_url.trim_end_matches('/').trim_end_matches(".git");
     parse_github_url_safe(url).map_err(|e| e.to_string())
 }
 
 async fn download_module_files(repo_url: &str, install_path: &Path) -> Result<(), String> {
     let (owner, repo) = parse_github_url(repo_url)?;
 
-    let tarball_url = format!(
-        "https://api.github.com/repos/{owner}/{repo}/tarball/main"
-    );
+    let tarball_url = format!("https://api.github.com/repos/{owner}/{repo}/tarball/main");
 
     tracing::info!("Downloading module from {}", tarball_url);
 
@@ -345,9 +344,7 @@ async fn download_module_files(repo_url: &str, install_path: &Path) -> Result<()
         .map_err(|e| format!("Failed to download module: {e}"))?;
 
     if !response.status().is_success() {
-        let fallback_url = format!(
-            "https://api.github.com/repos/{owner}/{repo}/tarball/master"
-        );
+        let fallback_url = format!("https://api.github.com/repos/{owner}/{repo}/tarball/master");
 
         tracing::info!("main branch not found, trying master: {}", fallback_url);
 
@@ -380,11 +377,9 @@ async fn extract_tarball(response: reqwest::Response, install_path: &Path) -> Re
 
     let install_path = install_path.to_path_buf();
 
-    tokio::task::spawn_blocking(move || {
-        extract_tarball_sync(&bytes, &install_path)
-    })
-    .await
-    .map_err(|e| format!("Task failed: {e}"))?
+    tokio::task::spawn_blocking(move || extract_tarball_sync(&bytes, &install_path))
+        .await
+        .map_err(|e| format!("Task failed: {e}"))?
 }
 
 fn extract_tarball_sync(bytes: &[u8], install_path: &Path) -> Result<(), String> {
@@ -433,7 +428,11 @@ fn extract_tarball_sync(bytes: &[u8], install_path: &Path) -> Result<(), String>
         }
     }
 
-    tracing::info!("Extracted {} files to {}", extracted_count, install_path.display());
+    tracing::info!(
+        "Extracted {} files to {}",
+        extracted_count,
+        install_path.display()
+    );
 
     if extracted_count == 0 {
         return Err("No files extracted from archive".to_string());
@@ -451,8 +450,8 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
         .await
         .map_err(|e| (uuid.clone(), format!("Failed to read state: {e}")))?;
 
-    let mut modules: Vec<InstalledModule> =
-        serde_json::from_str(&content).map_err(|e| (uuid.clone(), format!("Failed to parse state: {e}")))?;
+    let mut modules: Vec<InstalledModule> = serde_json::from_str(&content)
+        .map_err(|e| (uuid.clone(), format!("Failed to parse state: {e}")))?;
 
     let module = modules
         .iter_mut()
@@ -469,8 +468,8 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
 
     module.enabled = enabled;
 
-    let new_content =
-        serde_json::to_string_pretty(&modules).map_err(|e| (uuid.clone(), format!("Failed to serialize: {e}")))?;
+    let new_content = serde_json::to_string_pretty(&modules)
+        .map_err(|e| (uuid.clone(), format!("Failed to serialize: {e}")))?;
 
     tokio::fs::write(&state_path, new_content)
         .await
@@ -483,14 +482,19 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
                 if let Ok(module_config) = tokio::fs::read_to_string(&config_path).await {
                     let prefs = crate::services::preferences::load_preferences(&uuid);
                     tracing::debug!("Loaded {} preferences for {}", prefs.len(), uuid);
-                    let module_config = waybar_config::substitute_preferences(&module_config, &prefs);
+                    let module_config =
+                        waybar_config::substitute_preferences(&module_config, &prefs);
                     tracing::debug!("Substituted config: {}", module_config);
                     let install_path_str = install_path.to_string_lossy();
-                    waybar_config::merge_module_config(&waybar_content, &module_config, &install_path_str)
-                        .unwrap_or_else(|e| {
-                            tracing::warn!("Failed to merge module config: {e}");
-                            waybar_content.clone()
-                        })
+                    waybar_config::merge_module_config(
+                        &waybar_content,
+                        &module_config,
+                        &install_path_str,
+                    )
+                    .unwrap_or_else(|e| {
+                        tracing::warn!("Failed to merge module config: {e}");
+                        waybar_content.clone()
+                    })
                 } else {
                     tracing::warn!("Failed to read module config from {:?}", config_path);
                     waybar_content.clone()
@@ -501,11 +505,12 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
             };
             waybar_config::add_module(&with_module_config, &waybar_module_name, section)
         } else {
-            let without_config = waybar_config::remove_module_config(&waybar_content, &waybar_module_name)
-                .unwrap_or_else(|e| {
-                    tracing::warn!("Failed to remove module config: {e}");
-                    waybar_content.clone()
-                });
+            let without_config =
+                waybar_config::remove_module_config(&waybar_content, &waybar_module_name)
+                    .unwrap_or_else(|e| {
+                        tracing::warn!("Failed to remove module config: {e}");
+                        waybar_content.clone()
+                    });
             waybar_config::remove_module(&without_config, &waybar_module_name)
         };
 
@@ -514,7 +519,9 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
                 tracing::warn!("Failed to backup waybar config: {e}");
             }
 
-            if waybar_config::save_config(&new_waybar_content).await.is_ok()
+            if waybar_config::save_config(&new_waybar_content)
+                .await
+                .is_ok()
                 && let Err(e) = waybar_config::reload_waybar().await
             {
                 tracing::warn!("Failed to reload waybar: {e}");
@@ -528,7 +535,11 @@ async fn toggle_module_async(uuid: String, enabled: bool) -> Result<String, (Str
         handle_css_removal(&uuid).await;
     }
 
-    tracing::info!("Module {} {}", uuid, if enabled { "enabled" } else { "disabled" });
+    tracing::info!(
+        "Module {} {}",
+        uuid,
+        if enabled { "enabled" } else { "disabled" }
+    );
     Ok(uuid)
 }
 
@@ -568,18 +579,19 @@ async fn change_module_position_async(
         .await
         .map_err(|e| format!("Failed to save state: {e}"))?;
 
-    if was_enabled
-        && let Ok(waybar_content) = waybar_config::load_config().await
-    {
-        let modified = waybar_config::remove_module(&waybar_content, &waybar_module_name)
-            .and_then(|content| waybar_config::add_module(&content, &waybar_module_name, new_section));
+    if was_enabled && let Ok(waybar_content) = waybar_config::load_config().await {
+        let modified = waybar_config::remove_module(&waybar_content, &waybar_module_name).and_then(
+            |content| waybar_config::add_module(&content, &waybar_module_name, new_section),
+        );
 
         if let Ok(new_waybar_content) = modified {
             if let Err(e) = waybar_config::backup_config().await {
                 tracing::warn!("Failed to backup waybar config: {e}");
             }
 
-            if waybar_config::save_config(&new_waybar_content).await.is_ok()
+            if waybar_config::save_config(&new_waybar_content)
+                .await
+                .is_ok()
                 && let Err(e) = waybar_config::reload_waybar().await
             {
                 tracing::warn!("Failed to reload waybar: {e}");
@@ -606,8 +618,8 @@ async fn uninstall_module_async(uuid: String) -> Result<String, (String, String)
         .await
         .map_err(|e| (uuid.clone(), format!("Failed to read state: {e}")))?;
 
-    let mut modules: Vec<InstalledModule> =
-        serde_json::from_str(&content).map_err(|e| (uuid.clone(), format!("Failed to parse state: {e}")))?;
+    let mut modules: Vec<InstalledModule> = serde_json::from_str(&content)
+        .map_err(|e| (uuid.clone(), format!("Failed to parse state: {e}")))?;
 
     let module = modules
         .iter()
@@ -626,15 +638,16 @@ async fn uninstall_module_async(uuid: String) -> Result<String, (String, String)
                         waybar_content.clone()
                     });
 
-            let without_module =
-                waybar_config::remove_module(&without_config, &waybar_module_name);
+            let without_module = waybar_config::remove_module(&without_config, &waybar_module_name);
 
             if let Ok(new_waybar_content) = without_module {
                 if let Err(e) = waybar_config::backup_config().await {
                     tracing::warn!("Failed to backup waybar config: {e}");
                 }
 
-                if waybar_config::save_config(&new_waybar_content).await.is_ok()
+                if waybar_config::save_config(&new_waybar_content)
+                    .await
+                    .is_ok()
                     && let Err(e) = waybar_config::reload_waybar().await
                 {
                     tracing::warn!("Failed to reload waybar: {e}");
@@ -653,8 +666,8 @@ async fn uninstall_module_async(uuid: String) -> Result<String, (String, String)
 
     modules.retain(|m| m.uuid.to_string() != uuid);
 
-    let new_content =
-        serde_json::to_string_pretty(&modules).map_err(|e| (uuid.clone(), format!("Failed to serialize: {e}")))?;
+    let new_content = serde_json::to_string_pretty(&modules)
+        .map_err(|e| (uuid.clone(), format!("Failed to serialize: {e}")))?;
 
     tokio::fs::write(&state_path, new_content)
         .await

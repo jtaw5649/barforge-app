@@ -1,3 +1,4 @@
+mod author_card;
 mod category_style;
 mod confirmation_dialog;
 mod empty_state;
@@ -11,6 +12,7 @@ mod settings_screen;
 mod sidebar;
 mod skeleton_card;
 
+pub use author_card::{author_card, author_mini};
 pub use confirmation_dialog::confirmation_dialog;
 pub use empty_state::{empty_state, empty_state_dynamic, empty_state_with_action};
 pub use module_card::module_card;

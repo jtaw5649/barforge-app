@@ -1,6 +1,6 @@
 use clap::Parser;
 use std::io::IsTerminal;
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 use waybar_manager::cli::{Cli, Commands};
 
 fn setup_tracing() {

@@ -1,15 +1,15 @@
-use iced::widget::{button, column, container, row, text, Space};
+use iced::widget::{Space, button, column, container, row, text};
 use iced::{Background, Border, Element, Length};
 
 use crate::app::message::Message;
 use crate::app::state::Screen;
 use crate::domain::RegistryModule;
 use crate::icons::Icon;
-use crate::theme::{
-    shadow_md, shadow_hover, AppTheme, DESCRIPTION_HEIGHT, FONT_LG, FONT_SM, FONT_XS,
-    ICON_XS, RADIUS_LG, RADIUS_SM, SPACE_2XS, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS,
-};
 use crate::theme::button as btn_style;
+use crate::theme::{
+    AppTheme, DESCRIPTION_HEIGHT, FONT_LG, FONT_SM, FONT_XS, ICON_XS, RADIUS_LG, RADIUS_SM,
+    SPACE_2XS, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS, shadow_hover, shadow_md,
+};
 
 pub fn module_card(
     module: &RegistryModule,
@@ -31,14 +31,20 @@ pub fn module_card(
 
     let author_row = if verified {
         row![
-            text(format!("by {author}")).size(FONT_XS).color(theme.text_faint),
+            text(format!("by {author}"))
+                .size(FONT_XS)
+                .color(theme.text_faint),
             Icon::Check.colored(ICON_XS, theme.success),
         ]
         .spacing(SPACE_XS)
         .align_y(iced::Alignment::Center)
     } else {
-        row![text(format!("by {author}")).size(FONT_XS).color(theme.text_faint)]
-            .align_y(iced::Alignment::Center)
+        row![
+            text(format!("by {author}"))
+                .size(FONT_XS)
+                .color(theme.text_faint)
+        ]
+        .align_y(iced::Alignment::Center)
     };
 
     let header = column![title, author_row].spacing(SPACE_2XS);
@@ -61,7 +67,9 @@ pub fn module_card(
         row![
             row![
                 Icon::Star.colored(ICON_XS, theme.warning),
-                text(format!("{:.1}", r)).size(FONT_XS).color(theme.text_faint),
+                text(format!("{:.1}", r))
+                    .size(FONT_XS)
+                    .color(theme.text_faint),
             ]
             .spacing(SPACE_XS)
             .align_y(iced::Alignment::Center),
@@ -100,12 +108,8 @@ pub fn module_card(
             .into()
     };
 
-    let footer = row![
-        stats_row,
-        Space::new().width(Length::Fill),
-        action_element
-    ]
-    .align_y(iced::Alignment::Center);
+    let footer = row![stats_row, Space::new().width(Length::Fill), action_element]
+        .align_y(iced::Alignment::Center);
 
     let card_content = column![header, desc, footer]
         .spacing(SPACE_MD)
@@ -116,16 +120,10 @@ pub fn module_card(
         .padding(SPACE_LG)
         .style(move |_, status| {
             let (bg, border_color, shadow) = match status {
-                iced::widget::button::Status::Hovered => (
-                    theme_copy.bg_elevated,
-                    theme_copy.accent,
-                    shadow_hover(),
-                ),
-                _ => (
-                    theme_copy.bg_surface,
-                    theme_copy.border_subtle,
-                    shadow_md(),
-                ),
+                iced::widget::button::Status::Hovered => {
+                    (theme_copy.bg_elevated, theme_copy.accent, shadow_hover())
+                }
+                _ => (theme_copy.bg_surface, theme_copy.border_subtle, shadow_md()),
             };
             iced::widget::button::Style {
                 background: Some(Background::Color(bg)),

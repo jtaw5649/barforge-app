@@ -1,5 +1,5 @@
-use iced::widget::pick_list::{Status, Style};
 use iced::overlay::menu;
+use iced::widget::pick_list::{Status, Style};
 use iced::{Background, Border, Color, Shadow, Vector};
 
 use super::AppTheme;

@@ -89,18 +89,16 @@ pub fn init() -> Option<Receiver<TrayEvent>> {
         update_count: 0,
     };
 
-    thread::spawn(move || {
-        match tray.spawn() {
-            Ok(handle) => {
-                let handle_store = TRAY_HANDLE.get_or_init(|| Arc::new(Mutex::new(None)));
-                if let Ok(mut guard) = handle_store.lock() {
-                    *guard = Some(handle);
-                }
-                tracing::info!("System tray initialized");
+    thread::spawn(move || match tray.spawn() {
+        Ok(handle) => {
+            let handle_store = TRAY_HANDLE.get_or_init(|| Arc::new(Mutex::new(None)));
+            if let Ok(mut guard) = handle_store.lock() {
+                *guard = Some(handle);
             }
-            Err(e) => {
-                tracing::warn!("Failed to create tray icon: {}", e);
-            }
+            tracing::info!("System tray initialized");
+        }
+        Err(e) => {
+            tracing::warn!("Failed to create tray icon: {}", e);
         }
     });
 

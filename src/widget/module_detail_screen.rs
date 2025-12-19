@@ -1,16 +1,16 @@
 use chrono::{DateTime, Utc};
-use iced::widget::{button, column, container, image, row, scrollable, text, Space};
+use iced::widget::{Space, button, column, container, image, row, scrollable, text};
 use iced::{Alignment, Background, Border, Element, Length};
 
 use crate::app::message::Message;
-use crate::app::state::ScreenshotState;
-use crate::domain::RegistryModule;
+use crate::app::state::{ReviewsLoadingState, ScreenshotState};
+use crate::domain::{RegistryModule, Review};
 use crate::icons::Icon;
 use crate::theme::{
-    button as btn_style, container as cont_style, AppTheme, DETAIL_CONTENT_MAX_WIDTH, FONT_2XL,
-    FONT_LG, FONT_MD, FONT_SM, FONT_XS, ICON_MD, ICON_SM, RADIUS_MD, RADIUS_SM,
-    SCREENSHOT_FAILED_HEIGHT, SCREENSHOT_LOADING_HEIGHT, SCREENSHOT_MAX_HEIGHT, SPACE_LG, SPACE_MD,
-    SPACE_SM, SPACE_XL, SPACE_XS,
+    AppTheme, DETAIL_CONTENT_MAX_WIDTH, FONT_2XL, FONT_LG, FONT_MD, FONT_SM, FONT_XS, ICON_MD,
+    ICON_SM, RADIUS_MD, RADIUS_SM, SCREENSHOT_FAILED_HEIGHT, SCREENSHOT_LOADING_HEIGHT,
+    SCREENSHOT_MAX_HEIGHT, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XL, SPACE_XS, button as btn_style,
+    container as cont_style,
 };
 
 use super::category_style;
@@ -33,15 +33,58 @@ fn rating_stars_element<'a>(rating: f32, theme: &AppTheme) -> Element<'a, Messag
         stars.push(Icon::StarEmpty.colored(14.0, theme.text_faint).into());
     }
 
-    row(stars)
-        .spacing(2.0)
-        .align_y(Alignment::Center)
+    row(stars).spacing(2.0).align_y(Alignment::Center).into()
+}
+
+fn review_card<'a>(review: &'a Review, theme: &'a AppTheme) -> Element<'a, Message> {
+    let theme_copy = *theme;
+
+    let stars = rating_stars_element(review.rating as f32, theme);
+
+    let header = row![
+        text(&review.user.username)
+            .size(FONT_SM)
+            .color(theme.text_normal),
+        Space::new().width(Length::Fill),
+        stars,
+    ]
+    .align_y(Alignment::Center);
+
+    let mut content = column![header].spacing(SPACE_XS);
+
+    if let Some(title) = &review.title {
+        content = content.push(text(title).size(FONT_SM).color(theme.text_normal));
+    }
+
+    if let Some(body) = &review.body {
+        content = content.push(text(body).size(FONT_SM).color(theme.text_muted));
+    }
+
+    content = content.push(
+        text(review.relative_time())
+            .size(FONT_XS)
+            .color(theme.text_faint),
+    );
+
+    container(content)
+        .padding(SPACE_MD)
+        .width(Length::Fill)
+        .style(move |_: &iced::Theme| iced::widget::container::Style {
+            background: Some(Background::Color(theme_copy.bg_base)),
+            border: Border {
+                radius: RADIUS_SM.into(),
+                width: 1.0,
+                color: theme_copy.border_subtle,
+            },
+            ..Default::default()
+        })
         .into()
 }
 
 pub fn module_detail_screen<'a>(
     module: &'a RegistryModule,
     screenshot_state: &ScreenshotState,
+    reviews_state: &'a ReviewsLoadingState,
     is_installed: bool,
     installed_at: Option<DateTime<Utc>>,
     installing: bool,
@@ -81,9 +124,13 @@ pub fn module_detail_screen<'a>(
         ..Default::default()
     });
 
-    let header_row = row![back_button, Space::new().width(Length::Fill), category_badge]
-        .align_y(Alignment::Center)
-        .width(Length::Fill);
+    let header_row = row![
+        back_button,
+        Space::new().width(Length::Fill),
+        category_badge
+    ]
+    .align_y(Alignment::Center)
+    .width(Length::Fill);
 
     let hero_section = {
         let mut title_row_items: Vec<Element<Message>> = vec![
@@ -164,13 +211,9 @@ pub fn module_detail_screen<'a>(
         })
         .into()
     } else if installing {
-        container(
-            text("Installing...")
-                .size(FONT_SM)
-                .color(theme.text_muted),
-        )
-        .padding([SPACE_SM, SPACE_LG])
-        .into()
+        container(text("Installing...").size(FONT_SM).color(theme.text_muted))
+            .padding([SPACE_SM, SPACE_LG])
+            .into()
     } else {
         button(
             row![
@@ -252,49 +295,107 @@ pub fn module_detail_screen<'a>(
     };
 
     let about_title = text("About").size(FONT_LG).color(theme.text_normal);
-    
-    let description_content: Element<'a, Message> = if module.description.len() > 0 {
-         text(&module.description)
+
+    let description_content: Element<'a, Message> = if !module.description.is_empty() {
+        text(&module.description)
             .size(FONT_MD)
             .color(theme.text_muted)
             .into()
     } else {
-        text("No description provided.").size(FONT_SM).color(theme.text_faint).into()
+        text("No description provided.")
+            .size(FONT_SM)
+            .color(theme.text_faint)
+            .into()
     };
 
-    let description_section = container(
-        column![
-            about_title,
-            Space::new().height(SPACE_SM),
-            description_content,
-        ],
-    )
+    let description_section = container(column![
+        about_title,
+        Space::new().height(SPACE_SM),
+        description_content,
+    ])
     .style(cont_style::card(*theme))
     .padding(SPACE_LG)
     .width(Length::Fill);
 
-    let reviews_section = container(
-        column![
-            text("Reviews").size(FONT_LG).color(theme.text_normal),
-            Space::new().height(SPACE_SM),
-            container(
-                text("Reviews coming soon in v1.0.0")
-                    .size(FONT_SM)
-                    .color(theme.text_faint)
-            )
-            .padding(SPACE_LG)
-            .width(Length::Fill)
-            .style(move |_: &iced::Theme| iced::widget::container::Style {
-                background: Some(Background::Color(theme_copy.bg_base)),
-                border: Border {
-                    radius: RADIUS_SM.into(),
-                    width: 1.0,
-                    color: theme_copy.border_subtle,
-                },
-                ..Default::default()
-            })
-        ]
-    )
+    let reviews_content: Element<'a, Message> = match reviews_state {
+        ReviewsLoadingState::Loading => container(
+            text("Loading reviews...")
+                .size(FONT_SM)
+                .color(theme.text_faint),
+        )
+        .padding(SPACE_LG)
+        .width(Length::Fill)
+        .style(move |_: &iced::Theme| iced::widget::container::Style {
+            background: Some(Background::Color(theme_copy.bg_base)),
+            border: Border {
+                radius: RADIUS_SM.into(),
+                width: 1.0,
+                color: theme_copy.border_subtle,
+            },
+            ..Default::default()
+        })
+        .into(),
+        ReviewsLoadingState::Loaded(response) if response.reviews.is_empty() => container(
+            text("No reviews yet. Be the first to review!")
+                .size(FONT_SM)
+                .color(theme.text_faint),
+        )
+        .padding(SPACE_LG)
+        .width(Length::Fill)
+        .style(move |_: &iced::Theme| iced::widget::container::Style {
+            background: Some(Background::Color(theme_copy.bg_base)),
+            border: Border {
+                radius: RADIUS_SM.into(),
+                width: 1.0,
+                color: theme_copy.border_subtle,
+            },
+            ..Default::default()
+        })
+        .into(),
+        ReviewsLoadingState::Loaded(response) => {
+            let review_cards: Vec<Element<'a, Message>> = response
+                .reviews
+                .iter()
+                .take(5)
+                .map(|review| review_card(review, theme))
+                .collect();
+
+            let mut review_col = column(review_cards).spacing(SPACE_SM);
+
+            if response.total > 5 {
+                review_col = review_col.push(
+                    text(format!("...and {} more reviews", response.total - 5))
+                        .size(FONT_SM)
+                        .color(theme.text_muted),
+                );
+            }
+
+            review_col.into()
+        }
+        ReviewsLoadingState::NotLoaded | ReviewsLoadingState::Failed(_) => container(
+            text("Unable to load reviews")
+                .size(FONT_SM)
+                .color(theme.text_faint),
+        )
+        .padding(SPACE_LG)
+        .width(Length::Fill)
+        .style(move |_: &iced::Theme| iced::widget::container::Style {
+            background: Some(Background::Color(theme_copy.bg_base)),
+            border: Border {
+                radius: RADIUS_SM.into(),
+                width: 1.0,
+                color: theme_copy.border_subtle,
+            },
+            ..Default::default()
+        })
+        .into(),
+    };
+
+    let reviews_section = container(column![
+        text("Reviews").size(FONT_LG).color(theme.text_normal),
+        Space::new().height(SPACE_SM),
+        reviews_content,
+    ])
     .style(cont_style::card(*theme))
     .padding(SPACE_LG)
     .width(Length::Fill);
@@ -306,7 +407,9 @@ pub fn module_detail_screen<'a>(
             row![
                 text("Version").size(FONT_SM).color(theme.text_muted),
                 Space::new().width(Length::Fill),
-                text(version.to_string()).size(FONT_SM).color(theme.text_normal),
+                text(version.to_string())
+                    .size(FONT_SM)
+                    .color(theme.text_normal),
             ]
             .width(Length::Fill)
             .into(),
@@ -318,7 +421,9 @@ pub fn module_detail_screen<'a>(
             row![
                 text("Last Updated").size(FONT_SM).color(theme.text_muted),
                 Space::new().width(Length::Fill),
-                text(format_relative_time(last_updated)).size(FONT_SM).color(theme.text_normal),
+                text(format_relative_time(last_updated))
+                    .size(FONT_SM)
+                    .color(theme.text_normal),
             ]
             .width(Length::Fill)
             .into(),
@@ -328,15 +433,11 @@ pub fn module_detail_screen<'a>(
     let info_section: Element<Message> = if info_items.is_empty() {
         Space::new().into()
     } else {
-        container(
-            column![
-                text("Module Info")
-                    .size(FONT_LG)
-                    .color(theme.text_normal),
-                Space::new().height(SPACE_SM),
-                column(info_items).spacing(SPACE_SM),
-            ],
-        )
+        container(column![
+            text("Module Info").size(FONT_LG).color(theme.text_normal),
+            Space::new().height(SPACE_SM),
+            column(info_items).spacing(SPACE_SM),
+        ])
         .style(cont_style::card(*theme))
         .padding(SPACE_LG)
         .width(Length::Fill)

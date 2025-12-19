@@ -7,13 +7,13 @@ pub use module::{
     change_module_position, install_module, make_scripts_executable, toggle_module,
     uninstall_module, update_all_modules, update_module,
 };
-pub use registry::{load_registry, refresh_registry};
+pub use registry::{load_author_profile, load_module_reviews, load_registry, refresh_registry};
 pub use watchers::watch_omarchy_theme;
 
 use std::time::Duration;
 
-use iced::widget::image;
 use iced::Task;
+use iced::widget::image;
 
 use crate::app::Message;
 use crate::domain::InstalledModule;
@@ -39,8 +39,8 @@ async fn load_installed_async() -> Result<Vec<InstalledModule>, String> {
         .await
         .map_err(|e| format!("Failed to read installed modules: {e}"))?;
 
-    let modules: Vec<InstalledModule> =
-        serde_json::from_str(&content).map_err(|e| format!("Failed to parse installed modules: {e}"))?;
+    let modules: Vec<InstalledModule> = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse installed modules: {e}"))?;
 
     tracing::info!("Loaded {} installed modules", modules.len());
     Ok(modules)

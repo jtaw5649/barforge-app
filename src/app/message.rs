@@ -1,9 +1,13 @@
 use iced::widget::image;
 
-use crate::app::state::{CategoryFilter, ConfirmationAction, NotificationKind, Screen, SortField, ViewMode};
-use crate::domain::{BarSection, InstalledModule, ModuleUuid, RegistryIndex};
-use crate::services::{DepReport, InstallStage, PreferenceValue};
+use crate::app::state::{
+    CategoryFilter, ConfirmationAction, NotificationKind, Screen, SortField, ViewMode,
+};
+use crate::domain::{
+    AuthorProfile, BarSection, InstalledModule, ModuleUuid, RegistryIndex, ReviewsResponse,
+};
 use crate::security::SandboxStatus;
+use crate::services::{DepReport, InstallStage, PreferenceValue};
 use crate::theme::ThemeMode;
 
 #[derive(Debug, Clone)]
@@ -19,8 +23,14 @@ pub enum Message {
     ModuleClicked(ModuleUuid),
     InstallModule(ModuleUuid),
 
-    ToggleModule { uuid: ModuleUuid, enabled: bool },
-    SetModulePosition { uuid: ModuleUuid, section: BarSection },
+    ToggleModule {
+        uuid: ModuleUuid,
+        enabled: bool,
+    },
+    SetModulePosition {
+        uuid: ModuleUuid,
+        section: BarSection,
+    },
     PositionChanged(Result<String, String>),
     UninstallModule(ModuleUuid),
     UpdateModule(ModuleUuid),
@@ -74,9 +84,16 @@ pub enum Message {
     TrayCheckUpdates,
     TrayQuit,
 
-    InstallProgress { uuid: ModuleUuid, stage: InstallStage },
+    InstallProgress {
+        uuid: ModuleUuid,
+        stage: InstallStage,
+    },
     DependencyCheckCompleted(Result<DepReport, String>),
     RevocationCheckCompleted(Result<(), String>),
     SignatureVerified(Result<(), String>),
     SandboxStatusChanged(SandboxStatus),
+
+    AuthorClicked(String),
+    AuthorLoaded(Result<AuthorProfile, String>),
+    ModuleReviewsLoaded(Result<(ModuleUuid, ReviewsResponse), String>),
 }

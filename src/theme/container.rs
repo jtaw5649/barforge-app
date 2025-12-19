@@ -180,7 +180,9 @@ pub fn badge(color: iced::Color) -> impl Fn(&Theme) -> container::Style {
 
 pub fn badge_outline(color: iced::Color) -> impl Fn(&Theme) -> container::Style {
     move |_| container::Style {
-        background: Some(Background::Color(iced::Color::from_rgba(color.r, color.g, color.b, 0.15))),
+        background: Some(Background::Color(iced::Color::from_rgba(
+            color.r, color.g, color.b, 0.15,
+        ))),
         border: Border {
             color,
             width: 1.0,

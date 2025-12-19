@@ -2,18 +2,19 @@ use std::collections::{HashSet, VecDeque};
 use std::path::PathBuf;
 use std::time::Instant;
 
-use waybar_registry_types::{ModuleCategory, ModuleUuid, ModuleVersion, RegistryIndex, RegistryModule};
+use waybar_registry_types::{
+    ModuleCategory, ModuleUuid, ModuleVersion, RegistryIndex, RegistryModule,
+};
 
 use crate::app::state::{
-    App, BrowseState, CategoryFilter, ConfirmationState, InstalledState, LoadingState,
-    ModuleDetailState, PreferencesState, Screen, SortField, SortOrder, ViewMode,
+    App, AuthorProfileState, BrowseState, CategoryFilter, ConfirmationState, InstalledState,
+    LoadingState, ModuleDetailState, PreferencesState, Screen, SortField, SortOrder, ViewMode,
 };
 use crate::domain::InstalledModule;
 use crate::theme::{AppTheme, ThemeMode};
 
 pub fn test_uuid(name: &str) -> ModuleUuid {
-    ModuleUuid::try_from(format!("{name}@test").as_str())
-        .expect("valid test uuid format")
+    ModuleUuid::try_from(format!("{name}@test").as_str()).expect("valid test uuid format")
 }
 
 pub fn test_version(version: &str) -> ModuleVersion {
@@ -109,8 +110,8 @@ impl RegistryModuleBuilder {
 
     pub fn author(mut self, a: &str) -> Self {
         self.author = a.to_string();
-        self.uuid = ModuleUuid::try_from(format!("{}@{a}", self.name).as_str())
-            .expect("valid uuid format");
+        self.uuid =
+            ModuleUuid::try_from(format!("{}@{a}", self.name).as_str()).expect("valid uuid format");
         self.repo_url = format!("https://github.com/{a}/{}", self.name);
         self
     }
@@ -190,6 +191,7 @@ pub fn test_app() -> App {
         theme: AppTheme::dark(),
         omarchy_palette: None,
         module_detail: ModuleDetailState::default(),
+        author_profile: AuthorProfileState::default(),
         confirmation: ConfirmationState::default(),
         preferences: PreferencesState::default(),
         spinner_frame: 0,

@@ -4,7 +4,7 @@ pub mod container;
 pub mod palette;
 pub mod pick_list;
 
-pub use pick_list::{menu_style, pick_list_style, PickListColors};
+pub use pick_list::{PickListColors, menu_style, pick_list_style};
 
 use iced::gradient::Linear;
 use iced::{Color, Radians, Shadow};

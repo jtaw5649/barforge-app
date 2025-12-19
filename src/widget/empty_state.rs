@@ -3,7 +3,9 @@ use iced::{Alignment, Element, Length};
 
 use crate::app::message::Message;
 use crate::icons::Icon;
-use crate::theme::{button as button_style, AppTheme, FONT_2XL, FONT_SM, ICON_2XL, SPACE_MD, SPACE_SM};
+use crate::theme::{
+    AppTheme, FONT_2XL, FONT_SM, ICON_2XL, SPACE_MD, SPACE_SM, button as button_style,
+};
 
 pub fn empty_state(
     icon: Icon,

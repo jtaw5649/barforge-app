@@ -211,7 +211,10 @@ pub fn get_default_preferences(schema: &PreferencesSchema) -> ModulePreferences 
     prefs
 }
 
-pub fn merge_with_defaults(prefs: ModulePreferences, schema: &PreferencesSchema) -> ModulePreferences {
+pub fn merge_with_defaults(
+    prefs: ModulePreferences,
+    schema: &PreferencesSchema,
+) -> ModulePreferences {
     let mut result = get_default_preferences(schema);
     result.extend(prefs);
     result
@@ -318,7 +321,13 @@ mod tests {
         };
 
         let defaults = get_default_preferences(&schema);
-        assert_eq!(defaults.get("name").and_then(|v| v.as_string()), Some("default_name"));
-        assert_eq!(defaults.get("enabled").and_then(|v| v.as_bool()), Some(true));
+        assert_eq!(
+            defaults.get("name").and_then(|v| v.as_string()),
+            Some("default_name")
+        );
+        assert_eq!(
+            defaults.get("enabled").and_then(|v| v.as_bool()),
+            Some(true)
+        );
     }
 }

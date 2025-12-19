@@ -2,18 +2,31 @@ pub mod handlers;
 pub mod message;
 pub mod state;
 
-use iced::widget::{button, column, container, pick_list, responsive, row, scrollable, stack, text, text_input, Space};
+use iced::widget::{
+    Space, button, column, container, pick_list, responsive, row, scrollable, stack, text,
+    text_input,
+};
 use iced::{Alignment, Element, Length, Task, Theme};
 use iced_aw::Wrap;
 
 use crate::icons::Icon;
 use crate::services::is_omarchy_available;
 use crate::tasks;
-use crate::theme::{darken, menu_style, pick_list_style, PickListColors, CARD_WIDTH, RADIUS_MD, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_XS};
-use crate::widget::{confirmation_dialog, empty_state, empty_state_dynamic, empty_state_with_action, module_card, module_detail_screen, module_row, module_table, notification_toast, preferences_modal, settings_screen, sidebar, skeleton_card};
+use crate::theme::{
+    CARD_WIDTH, PickListColors, RADIUS_MD, SPACING_LG, SPACING_MD, SPACING_SM, SPACING_XS, darken,
+    menu_style, pick_list_style,
+};
+use crate::widget::{
+    confirmation_dialog, empty_state, empty_state_dynamic, empty_state_with_action, module_card,
+    module_detail_screen, module_row, module_table, notification_toast, preferences_modal,
+    settings_screen, sidebar, skeleton_card,
+};
 
 pub use message::Message;
-pub use state::{App, CategoryFilter, LoadingState, Screen, ScreenshotState, SortField, SortOrder, ViewMode};
+pub use state::{
+    App, AuthorLoadingState, CategoryFilter, LoadingState, Screen, ScreenshotState, SortField,
+    SortOrder, ViewMode,
+};
 
 impl App {
     pub fn new() -> (Self, Task<Message>) {
@@ -78,7 +91,9 @@ impl App {
 
             Message::ToggleCompleted(result) => handlers::handle_toggle_completed(self, result),
 
-            Message::UninstallCompleted(result) => handlers::handle_uninstall_completed(self, result),
+            Message::UninstallCompleted(result) => {
+                handlers::handle_uninstall_completed(self, result)
+            }
 
             Message::UpdateModule(uuid) => handlers::handle_update_module(self, uuid),
 
@@ -174,12 +189,18 @@ impl App {
                 handlers::handle_revocation_check_completed(self, result)
             }
 
-            Message::SignatureVerified(result) => {
-                handlers::handle_signature_verified(self, result)
-            }
+            Message::SignatureVerified(result) => handlers::handle_signature_verified(self, result),
 
             Message::SandboxStatusChanged(status) => {
                 handlers::handle_sandbox_status_changed(self, status)
+            }
+
+            Message::AuthorClicked(username) => handlers::handle_author_clicked(self, username),
+
+            Message::AuthorLoaded(result) => handlers::handle_author_loaded(self, result),
+
+            Message::ModuleReviewsLoaded(result) => {
+                handlers::handle_module_reviews_loaded(self, result)
             }
         }
     }
@@ -199,6 +220,7 @@ impl App {
             Screen::Updates => self.view_updates(),
             Screen::Settings => self.view_settings(),
             Screen::ModuleDetail(uuid) => self.view_module_detail(uuid),
+            Screen::AuthorProfile(username) => self.view_author_profile(username),
         };
 
         let bg = self.theme.background;
@@ -216,8 +238,11 @@ impl App {
             Space::new().into()
         } else {
             let notification_stack = column(
-                self.notifications.iter().map(|notif| notification_toast(notif, &self.theme))
-            ).spacing(SPACING_SM);
+                self.notifications
+                    .iter()
+                    .map(|notif| notification_toast(notif, &self.theme)),
+            )
+            .spacing(SPACING_SM);
 
             container(notification_stack)
                 .width(Length::Fill)
@@ -235,20 +260,27 @@ impl App {
                 Space::new().into()
             };
 
-        let preferences_overlay: Element<Message> =
-            if let (Some(uuid), Some(schema)) = (&self.preferences.open_for, &self.preferences.schema) {
-                preferences_modal(
-                    &self.preferences.module_name,
-                    uuid,
-                    schema,
-                    &self.preferences.values,
-                    &self.theme,
-                )
-            } else {
-                Space::new().into()
-            };
+        let preferences_overlay: Element<Message> = if let (Some(uuid), Some(schema)) =
+            (&self.preferences.open_for, &self.preferences.schema)
+        {
+            preferences_modal(
+                &self.preferences.module_name,
+                uuid,
+                schema,
+                &self.preferences.values,
+                &self.theme,
+            )
+        } else {
+            Space::new().into()
+        };
 
-        stack![main_layout, notification_overlay, confirmation_overlay, preferences_overlay].into()
+        stack![
+            main_layout,
+            notification_overlay,
+            confirmation_overlay,
+            preferences_overlay
+        ]
+        .into()
     }
 
     fn view_settings(&self) -> Element<'_, Message> {
@@ -268,6 +300,7 @@ impl App {
             return module_detail_screen(
                 module,
                 &self.module_detail.screenshot,
+                &self.module_detail.reviews,
                 is_installed,
                 installed_at,
                 self.module_detail.installing,
@@ -280,6 +313,115 @@ impl App {
             "The requested module could not be found",
             &self.theme,
         )
+    }
+
+    fn view_author_profile(&self, username: &str) -> Element<'_, Message> {
+        use crate::app::state::AuthorLoadingState;
+
+        match &self.author_profile.loading {
+            AuthorLoadingState::Loading | AuthorLoadingState::NotLoaded => {
+                let text_color = self.theme.text_muted;
+                container(
+                    text(format!("Loading profile for {}...", username))
+                        .size(16)
+                        .color(text_color),
+                )
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill)
+                .center_y(Length::Fill)
+                .into()
+            }
+            AuthorLoadingState::Loaded(profile) => {
+                let author = &profile.author;
+                let theme = &self.theme;
+
+                let display_name = author.display();
+                let header = column![
+                    text(display_name).size(28).color(theme.text_normal),
+                    text(format!("@{}", author.username))
+                        .size(14)
+                        .color(theme.text_muted),
+                ]
+                .spacing(4);
+
+                let bio = author
+                    .bio
+                    .as_deref()
+                    .map(|bio_text| text(bio_text).size(14).color(theme.text_normal));
+
+                let member_since = text(format!("Member since {}", author.member_since()))
+                    .size(12)
+                    .color(theme.text_muted);
+
+                let module_count = text(format!("{} modules published", author.module_count))
+                    .size(12)
+                    .color(theme.text_muted);
+
+                let mut content = column![header].spacing(SPACING_MD);
+
+                if let Some(bio_text) = bio {
+                    content = content.push(bio_text);
+                }
+
+                content = content.push(member_since).push(module_count);
+
+                if !profile.modules.is_empty() {
+                    let modules_header =
+                        text("Published Modules").size(18).color(theme.text_normal);
+
+                    let module_list: Element<'_, Message> = column(
+                        profile
+                            .modules
+                            .iter()
+                            .map(|m| {
+                                let bg = theme.surface;
+                                let name_color = theme.text_normal;
+                                let desc_color = theme.text_muted;
+                                container(
+                                    column![
+                                        text(&m.name).size(14).color(name_color),
+                                        text(&m.description).size(12).color(desc_color),
+                                    ]
+                                    .spacing(4),
+                                )
+                                .padding(SPACING_SM)
+                                .style(move |_| iced::widget::container::Style {
+                                    background: Some(iced::Background::Color(bg)),
+                                    border: iced::Border::default()
+                                        .rounded(RADIUS_MD)
+                                        .color(iced::Color::TRANSPARENT),
+                                    ..Default::default()
+                                })
+                                .into()
+                            })
+                            .collect::<Vec<_>>(),
+                    )
+                    .spacing(SPACING_SM)
+                    .into();
+
+                    content = content
+                        .push(Space::new().height(SPACING_MD))
+                        .push(modules_header)
+                        .push(module_list);
+                }
+
+                let bg = theme.background;
+                scrollable(container(content).padding(SPACING_LG).style(move |_| {
+                    iced::widget::container::Style {
+                        background: Some(iced::Background::Color(bg)),
+                        ..Default::default()
+                    }
+                }))
+                .into()
+            }
+            AuthorLoadingState::Failed(error) => empty_state_dynamic(
+                Icon::Error,
+                "Failed to load profile",
+                error.clone(),
+                &self.theme,
+            ),
+        }
     }
 
     fn view_browse(&self) -> Element<'_, Message> {
@@ -315,7 +457,7 @@ impl App {
         .style(crate::theme::container::search_bar(self.theme));
 
         let picker_colors = PickListColors::from_theme(&self.theme);
-        
+
         let category_picker = container(
             pick_list(
                 CategoryFilter::all(),
@@ -324,8 +466,9 @@ impl App {
             )
             .padding(crate::theme::SPACE_SM)
             .style(pick_list_style(picker_colors, RADIUS_MD))
-            .menu_style(menu_style(picker_colors, RADIUS_MD, 0.3, 8.0))
-        ).width(Length::Fixed(140.0));
+            .menu_style(menu_style(picker_colors, RADIUS_MD, 0.3, 8.0)),
+        )
+        .width(Length::Fixed(140.0));
 
         let sort_picker = container(
             pick_list(
@@ -335,47 +478,73 @@ impl App {
             )
             .padding(crate::theme::SPACE_SM)
             .style(pick_list_style(picker_colors, RADIUS_MD))
-            .menu_style(menu_style(picker_colors, RADIUS_MD, 0.3, 8.0))
-        ).width(Length::Fixed(140.0));
+            .menu_style(menu_style(picker_colors, RADIUS_MD, 0.3, 8.0)),
+        )
+        .width(Length::Fixed(140.0));
 
         let sort_icon = match self.browse.sort_order {
             SortOrder::Ascending => Icon::ArrowUp,
             SortOrder::Descending => Icon::ArrowDown,
         };
-        
+
         let sort_toggle = button(sort_icon.colored(16.0, self.theme.text_normal))
             .padding(crate::theme::SPACE_SM)
             .on_press(Message::ToggleSortOrder)
             .style(crate::theme::button::secondary(self.theme));
 
         let view_mode = self.browse.view_mode;
-        
-        let view_cards_btn = button(Icon::Grid.colored(16.0, if view_mode == state::ViewMode::Cards { iced::Color::WHITE } else { self.theme.text_normal }))
-            .padding(crate::theme::SPACE_SM)
-            .on_press(Message::SetViewMode(state::ViewMode::Cards))
-            .style(if view_mode == state::ViewMode::Cards {
-                crate::theme::button::primary(self.theme)
-            } else {
-                crate::theme::button::secondary(self.theme)
-            });
 
-        let view_table_btn = button(Icon::List.colored(16.0, if view_mode == state::ViewMode::Table { iced::Color::WHITE } else { self.theme.text_normal }))
-            .padding(crate::theme::SPACE_SM)
-            .on_press(Message::SetViewMode(state::ViewMode::Table))
-            .style(if view_mode == state::ViewMode::Table {
-                crate::theme::button::primary(self.theme)
+        let view_cards_btn = button(Icon::Grid.colored(
+            16.0,
+            if view_mode == state::ViewMode::Cards {
+                iced::Color::WHITE
             } else {
-                crate::theme::button::secondary(self.theme)
-            });
+                self.theme.text_normal
+            },
+        ))
+        .padding(crate::theme::SPACE_SM)
+        .on_press(Message::SetViewMode(state::ViewMode::Cards))
+        .style(if view_mode == state::ViewMode::Cards {
+            crate::theme::button::primary(self.theme)
+        } else {
+            crate::theme::button::secondary(self.theme)
+        });
+
+        let view_table_btn = button(Icon::List.colored(
+            16.0,
+            if view_mode == state::ViewMode::Table {
+                iced::Color::WHITE
+            } else {
+                self.theme.text_normal
+            },
+        ))
+        .padding(crate::theme::SPACE_SM)
+        .on_press(Message::SetViewMode(state::ViewMode::Table))
+        .style(if view_mode == state::ViewMode::Table {
+            crate::theme::button::primary(self.theme)
+        } else {
+            crate::theme::button::secondary(self.theme)
+        });
 
         let view_toggle = row![view_cards_btn, view_table_btn].spacing(crate::theme::SPACE_XS);
 
         let verified_filter = self.browse.verified_only;
-        
+
         let verified_toggle = button(
             row![
-                Icon::Check.colored(14.0, if verified_filter { iced::Color::WHITE } else { self.theme.text_muted }),
-                text("Verified").size(14.0).color(if verified_filter { iced::Color::WHITE } else { self.theme.text_muted }),
+                Icon::Check.colored(
+                    14.0,
+                    if verified_filter {
+                        iced::Color::WHITE
+                    } else {
+                        self.theme.text_muted
+                    }
+                ),
+                text("Verified").size(14.0).color(if verified_filter {
+                    iced::Color::WHITE
+                } else {
+                    self.theme.text_muted
+                }),
             ]
             .spacing(crate::theme::SPACE_XS)
             .align_y(Alignment::Center),
@@ -432,12 +601,8 @@ impl App {
         .align_y(Alignment::Center);
 
         let header = container(
-            row![
-                search_input,
-                Space::new().width(Length::Fill),
-                controls_row
-            ]
-            .align_y(Alignment::Center),
+            row![search_input, Space::new().width(Length::Fill), controls_row]
+                .align_y(Alignment::Center),
         )
         .padding([crate::theme::SPACE_MD, crate::theme::SPACE_LG]);
 
@@ -460,8 +625,9 @@ impl App {
 
                 let skeleton_content = responsive(move |size| {
                     let card_width = calculate_card_width(size.width - 2.0 * SPACING_LG);
-                    let skeleton_cards: Vec<Element<Message>> =
-                        (0..8).map(|i| skeleton_card(&theme, card_width, shimmer_frame + i * 3)).collect();
+                    let skeleton_cards: Vec<Element<Message>> = (0..8)
+                        .map(|i| skeleton_card(&theme, card_width, shimmer_frame + i * 3))
+                        .collect();
 
                     let grid = Wrap::with_elements(skeleton_cards)
                         .spacing(SPACING_LG)
@@ -645,13 +811,9 @@ impl App {
                 &self.theme,
             )
         } else {
-            scrollable(
-                column(rows)
-                    .spacing(SPACING_SM)
-                    .padding(SPACING_LG),
-            )
-            .height(Length::Fill)
-            .into()
+            scrollable(column(rows).spacing(SPACING_SM).padding(SPACING_LG))
+                .height(Length::Fill)
+                .into()
         };
 
         column![header, content]
@@ -735,7 +897,11 @@ impl App {
                 column![
                     text("Updates").size(20).color(self.theme.text),
                     text(if update_count > 0 {
-                        format!("{} update{} available", update_count, if update_count == 1 { "" } else { "s" })
+                        format!(
+                            "{} update{} available",
+                            update_count,
+                            if update_count == 1 { "" } else { "s" }
+                        )
                     } else {
                         "All modules are up to date".to_string()
                     })
@@ -764,7 +930,11 @@ impl App {
                     let uuid_str = m.uuid.to_string();
                     let uuid_module = m.uuid.clone();
                     let current_ver = m.version.to_string();
-                    let new_ver = m.registry_version.as_ref().map(|v| v.to_string()).unwrap_or_default();
+                    let new_ver = m
+                        .registry_version
+                        .as_ref()
+                        .map(|v| v.to_string())
+                        .unwrap_or_default();
                     let is_updating = self.installed.updating.contains(&uuid_str);
 
                     let theme = self.theme;
@@ -799,7 +969,9 @@ impl App {
                             .on_press(Message::UpdateModule(uuid_module))
                             .style(move |_theme, status| {
                                 let bg = match status {
-                                    button::Status::Hovered | button::Status::Pressed => primary_hover,
+                                    button::Status::Hovered | button::Status::Pressed => {
+                                        primary_hover
+                                    }
                                     _ => primary,
                                 };
                                 button::Style {
@@ -843,13 +1015,9 @@ impl App {
                 })
                 .collect();
 
-            scrollable(
-                column(rows)
-                    .spacing(SPACING_SM)
-                    .padding(SPACING_LG),
-            )
-            .height(Length::Fill)
-            .into()
+            scrollable(column(rows).spacing(SPACING_SM).padding(SPACING_LG))
+                .height(Length::Fill)
+                .into()
         };
 
         column![header, content]

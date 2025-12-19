@@ -1,10 +1,10 @@
-use iced::widget::{column, container, row, Space};
+use iced::widget::{Space, column, container, row};
 use iced::{Background, Border, Color, Element, Length, Radians};
 
 use crate::app::message::Message;
 use crate::theme::{
-    container as cont_style, AppTheme, FONT_MD, FONT_SM, FONT_XS, RADIUS_SM, SKELETON_BAR_MD,
-    SKELETON_BAR_SM, SPACE_MD, SPACE_SM, SPACE_XS,
+    AppTheme, FONT_MD, FONT_SM, FONT_XS, RADIUS_SM, SKELETON_BAR_MD, SKELETON_BAR_SM, SPACE_MD,
+    SPACE_SM, SPACE_XS, container as cont_style,
 };
 
 fn shimmer_gradient(base_color: Color, shimmer_phase: f32) -> Background {
@@ -16,11 +16,26 @@ fn shimmer_gradient(base_color: Color, shimmer_phase: f32) -> Background {
     };
 
     let stops = vec![
-        iced::gradient::ColorStop { offset: 0.0, color: base_color },
-        iced::gradient::ColorStop { offset: shimmer_phase.max(0.0), color: base_color },
-        iced::gradient::ColorStop { offset: (shimmer_phase + 0.15).clamp(0.0, 1.0), color: highlight },
-        iced::gradient::ColorStop { offset: (shimmer_phase + 0.3).min(1.0), color: base_color },
-        iced::gradient::ColorStop { offset: 1.0, color: base_color },
+        iced::gradient::ColorStop {
+            offset: 0.0,
+            color: base_color,
+        },
+        iced::gradient::ColorStop {
+            offset: shimmer_phase.max(0.0),
+            color: base_color,
+        },
+        iced::gradient::ColorStop {
+            offset: (shimmer_phase + 0.15).clamp(0.0, 1.0),
+            color: highlight,
+        },
+        iced::gradient::ColorStop {
+            offset: (shimmer_phase + 0.3).min(1.0),
+            color: base_color,
+        },
+        iced::gradient::ColorStop {
+            offset: 1.0,
+            color: base_color,
+        },
     ];
 
     Background::Gradient(iced::Gradient::Linear(
@@ -51,7 +66,11 @@ fn skeleton_bar(
         .into()
 }
 
-pub fn skeleton_card(theme: &AppTheme, width: f32, shimmer_frame: usize) -> Element<'static, Message> {
+pub fn skeleton_card(
+    theme: &AppTheme,
+    width: f32,
+    shimmer_frame: usize,
+) -> Element<'static, Message> {
     let shimmer_phase = ((shimmer_frame % 30) as f32 / 30.0) * 1.3 - 0.3;
 
     let header = column![
@@ -69,9 +88,19 @@ pub fn skeleton_card(theme: &AppTheme, width: f32, shimmer_frame: usize) -> Elem
     .width(Length::Fill);
 
     let footer = row![
-        skeleton_bar(Length::Fixed(SKELETON_BAR_MD), FONT_XS + 4.0, theme, shimmer_phase),
+        skeleton_bar(
+            Length::Fixed(SKELETON_BAR_MD),
+            FONT_XS + 4.0,
+            theme,
+            shimmer_phase
+        ),
         Space::new().width(Length::Fill),
-        skeleton_bar(Length::Fixed(SKELETON_BAR_SM), FONT_XS, theme, shimmer_phase),
+        skeleton_bar(
+            Length::Fixed(SKELETON_BAR_SM),
+            FONT_XS,
+            theme,
+            shimmer_phase
+        ),
     ]
     .align_y(iced::Alignment::Center);
 

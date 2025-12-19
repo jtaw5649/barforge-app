@@ -1,18 +1,24 @@
-use iced::widget::{button, column, container, row, text, Space};
+use iced::widget::{Space, button, column, container, row, text};
 use iced::{Alignment, Element, Length};
 
 use crate::app::message::Message;
 use crate::app::state::ConfirmationAction;
 use crate::theme::{
-    button as button_style, container as cont_style, AppTheme, CONFIRMATION_DIALOG_WIDTH, FONT_MD,
-    FONT_SM, SPACE_LG, SPACE_MD, SPACE_SM,
+    AppTheme, CONFIRMATION_DIALOG_WIDTH, FONT_MD, FONT_SM, SPACE_LG, SPACE_MD, SPACE_SM,
+    button as button_style, container as cont_style,
 };
 
-pub fn confirmation_dialog(action: &ConfirmationAction, theme: &AppTheme) -> Element<'static, Message> {
+pub fn confirmation_dialog(
+    action: &ConfirmationAction,
+    theme: &AppTheme,
+) -> Element<'static, Message> {
     let (title, message) = match action {
         ConfirmationAction::UninstallModule { name, .. } => (
             "Uninstall Module",
-            format!("Are you sure you want to uninstall \"{}\"? This action cannot be undone.", name),
+            format!(
+                "Are you sure you want to uninstall \"{}\"? This action cannot be undone.",
+                name
+            ),
         ),
     };
 

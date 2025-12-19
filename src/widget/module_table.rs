@@ -1,15 +1,13 @@
 use std::collections::HashSet;
 
-use iced::widget::{button, column, container, row, scrollable, text, Space};
+use iced::widget::{Space, button, column, container, row, scrollable, text};
 use iced::{Background, Border, Element, Length};
 
 use crate::app::message::Message;
 use crate::app::state::{Screen, SortField, SortOrder};
 use crate::domain::RegistryModule;
 use crate::icons::Icon;
-use crate::theme::{
-    AppTheme, FONT_SM, FONT_XS, ICON_XS, RADIUS_SM, SPACE_MD, SPACE_SM, SPACE_XS,
-};
+use crate::theme::{AppTheme, FONT_SM, FONT_XS, ICON_XS, RADIUS_SM, SPACE_MD, SPACE_SM, SPACE_XS};
 
 use super::format_relative_time;
 
@@ -45,18 +43,22 @@ pub fn module_table<'a>(
 
     let header_btn = |label: &str, field: SortField| {
         let label_with_indicator = format!("{}{}", label, sort_indicator(field));
-        button(text(label_with_indicator).size(FONT_XS).color(theme_copy.text_muted))
-            .on_press(if sort_field == field {
-                Message::ToggleSortOrder
-            } else {
-                Message::SetSortField(field)
-            })
-            .padding([SPACE_XS, SPACE_SM])
-            .style(move |_, _| iced::widget::button::Style {
-                background: None,
-                text_color: theme_copy.text_muted,
-                ..Default::default()
-            })
+        button(
+            text(label_with_indicator)
+                .size(FONT_XS)
+                .color(theme_copy.text_muted),
+        )
+        .on_press(if sort_field == field {
+            Message::ToggleSortOrder
+        } else {
+            Message::SetSortField(field)
+        })
+        .padding([SPACE_XS, SPACE_SM])
+        .style(move |_, _| iced::widget::button::Style {
+            background: None,
+            text_color: theme_copy.text_muted,
+            ..Default::default()
+        })
     };
 
     let header = container(
@@ -70,7 +72,8 @@ pub fn module_table<'a>(
                 .padding([SPACE_XS, SPACE_SM]),
             container(header_btn("Downloads", SortField::Downloads)).width(Length::FillPortion(1)),
             container(header_btn("Rating", SortField::Rating)).width(Length::FillPortion(1)),
-            container(header_btn("Updated", SortField::RecentlyUpdated)).width(Length::FillPortion(1)),
+            container(header_btn("Updated", SortField::RecentlyUpdated))
+                .width(Length::FillPortion(1)),
             container(text("Status").size(FONT_XS).color(theme_copy.text_muted))
                 .width(Length::FillPortion(1))
                 .padding([SPACE_XS, SPACE_SM]),
@@ -118,7 +121,9 @@ pub fn module_table<'a>(
             let row_content = row![
                 container(
                     row![
-                        text(&module.name).size(FONT_SM).color(theme_copy.text_normal),
+                        text(&module.name)
+                            .size(FONT_SM)
+                            .color(theme_copy.text_normal),
                         verified_badge,
                     ]
                     .spacing(SPACE_XS)
@@ -126,21 +131,37 @@ pub fn module_table<'a>(
                 )
                 .width(Length::FillPortion(3))
                 .padding([SPACE_XS, SPACE_SM]),
-                container(text(&module.author).size(FONT_XS).color(theme_copy.text_muted))
-                    .width(Length::FillPortion(2))
-                    .padding([SPACE_XS, SPACE_SM]),
-                container(text(module.category.display_name()).size(FONT_XS).color(theme_copy.text_muted))
-                    .width(Length::FillPortion(2))
-                    .padding([SPACE_XS, SPACE_SM]),
-                container(text(module.formatted_downloads()).size(FONT_XS).color(theme_copy.text_muted))
-                    .width(Length::FillPortion(1))
-                    .padding([SPACE_XS, SPACE_SM]),
+                container(
+                    text(&module.author)
+                        .size(FONT_XS)
+                        .color(theme_copy.text_muted)
+                )
+                .width(Length::FillPortion(2))
+                .padding([SPACE_XS, SPACE_SM]),
+                container(
+                    text(module.category.display_name())
+                        .size(FONT_XS)
+                        .color(theme_copy.text_muted)
+                )
+                .width(Length::FillPortion(2))
+                .padding([SPACE_XS, SPACE_SM]),
+                container(
+                    text(module.formatted_downloads())
+                        .size(FONT_XS)
+                        .color(theme_copy.text_muted)
+                )
+                .width(Length::FillPortion(1))
+                .padding([SPACE_XS, SPACE_SM]),
                 container(text(rating_text).size(FONT_XS).color(theme_copy.text_muted))
                     .width(Length::FillPortion(1))
                     .padding([SPACE_XS, SPACE_SM]),
-                container(text(updated_text).size(FONT_XS).color(theme_copy.text_muted))
-                    .width(Length::FillPortion(1))
-                    .padding([SPACE_XS, SPACE_SM]),
+                container(
+                    text(updated_text)
+                        .size(FONT_XS)
+                        .color(theme_copy.text_muted)
+                )
+                .width(Length::FillPortion(1))
+                .padding([SPACE_XS, SPACE_SM]),
                 container(status_elem)
                     .width(Length::FillPortion(1))
                     .padding([SPACE_XS, SPACE_SM]),
@@ -174,8 +195,7 @@ pub fn module_table<'a>(
 
     let table_body = column(rows).spacing(1);
 
-    let table = column![header, scrollable(table_body).height(Length::Fill)]
-        .spacing(0);
+    let table = column![header, scrollable(table_body).height(Length::Fill)].spacing(0);
 
     container(table)
         .style(move |_| iced::widget::container::Style {

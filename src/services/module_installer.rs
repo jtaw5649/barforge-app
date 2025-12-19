@@ -1,9 +1,8 @@
 use crate::security::{
-    check_revocation, compute_sha256, extract_tarball_safe, run_script_sandboxed,
-    ExtractionError, OfflinePolicy, RevocationError, ScriptError, VerifyError, Verifier,
-    SCRIPT_TIMEOUT_SECS,
+    ExtractionError, OfflinePolicy, RevocationError, SCRIPT_TIMEOUT_SECS, ScriptError, Verifier,
+    VerifyError, check_revocation, compute_sha256, extract_tarball_safe, run_script_sandboxed,
 };
-use crate::services::{check_dependencies, DepReport, PackageConfigError, PackageToml};
+use crate::services::{DepReport, PackageConfigError, PackageToml, check_dependencies};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use thiserror::Error;
@@ -109,7 +108,8 @@ impl SecureInstaller {
         check_revocation(params.uuid, params.version, self.offline_policy).await?;
 
         progress(InstallStage::VerifyingSignature);
-        self.verifier.verify(params.package_data, params.signature)?;
+        self.verifier
+            .verify(params.package_data, params.signature)?;
 
         progress(InstallStage::VerifyingHash);
         let actual_hash = compute_sha256(params.package_data);
@@ -136,7 +136,9 @@ impl SecureInstaller {
             let specs = config.to_dep_specs();
             let report = check_dependencies(&specs);
             if !report.all_satisfied {
-                return Err(InstallError::MissingDependencies(report.missing_required.clone()));
+                return Err(InstallError::MissingDependencies(
+                    report.missing_required.clone(),
+                ));
             }
             Some(report)
         } else {

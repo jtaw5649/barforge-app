@@ -82,19 +82,28 @@ mod tests {
     #[test]
     fn rejects_javascript_scheme() {
         let result = validate_web_url("javascript:alert('xss')");
-        assert!(matches!(result, Err(UrlValidationError::DisallowedScheme(_))));
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::DisallowedScheme(_))
+        ));
     }
 
     #[test]
     fn rejects_file_scheme() {
         let result = validate_web_url("file:///etc/passwd");
-        assert!(matches!(result, Err(UrlValidationError::DisallowedScheme(_))));
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::DisallowedScheme(_))
+        ));
     }
 
     #[test]
     fn rejects_data_scheme() {
         let result = validate_web_url("data:text/html,<script>alert('xss')</script>");
-        assert!(matches!(result, Err(UrlValidationError::DisallowedScheme(_))));
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::DisallowedScheme(_))
+        ));
     }
 
     #[test]
@@ -118,7 +127,10 @@ mod tests {
     #[test]
     fn github_rejects_non_github_domain() {
         let result = validate_github_url("https://evil.com/user/repo");
-        assert!(matches!(result, Err(UrlValidationError::DisallowedDomain(_))));
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::DisallowedDomain(_))
+        ));
     }
 
     #[test]
@@ -130,25 +142,37 @@ mod tests {
     #[test]
     fn github_rejects_http_scheme() {
         let result = validate_github_url("http://github.com/user/repo");
-        assert!(matches!(result, Err(UrlValidationError::DisallowedScheme(_))));
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::DisallowedScheme(_))
+        ));
     }
 
     #[test]
     fn github_rejects_api_subdomain() {
         let result = validate_github_url("https://api.github.com/user/repo");
-        assert!(matches!(result, Err(UrlValidationError::DisallowedDomain(_))));
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::DisallowedDomain(_))
+        ));
     }
 
     #[test]
     fn github_rejects_raw_subdomain() {
         let result = validate_github_url("https://raw.githubusercontent.com/user/repo/file");
-        assert!(matches!(result, Err(UrlValidationError::DisallowedDomain(_))));
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::DisallowedDomain(_))
+        ));
     }
 
     #[test]
     fn parse_github_extracts_owner_repo() {
         let result = parse_github_url_safe("https://github.com/waybar-modules/weather");
-        assert_eq!(result, Ok(("waybar-modules".to_string(), "weather".to_string())));
+        assert_eq!(
+            result,
+            Ok(("waybar-modules".to_string(), "weather".to_string()))
+        );
     }
 
     #[test]
@@ -166,12 +190,18 @@ mod tests {
     #[test]
     fn parse_github_rejects_missing_repo() {
         let result = parse_github_url_safe("https://github.com/owner");
-        assert!(matches!(result, Err(UrlValidationError::InvalidGitHubPath(_))));
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::InvalidGitHubPath(_))
+        ));
     }
 
     #[test]
     fn parse_github_rejects_root_path() {
         let result = parse_github_url_safe("https://github.com/");
-        assert!(matches!(result, Err(UrlValidationError::InvalidGitHubPath(_))));
+        assert!(matches!(
+            result,
+            Err(UrlValidationError::InvalidGitHubPath(_))
+        ));
     }
 }

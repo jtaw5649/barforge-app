@@ -1,10 +1,15 @@
 use iced::Task;
 
 use crate::app::message::Message;
-use crate::app::state::{App, LoadingState, NotificationKind};
-use crate::domain::{InstalledModule, RegistryIndex};
+use crate::app::state::{
+    App, AuthorLoadingState, LoadingState, NotificationKind, ReviewsLoadingState,
+};
+use crate::domain::{AuthorProfile, InstalledModule, ModuleUuid, RegistryIndex, ReviewsResponse};
 
-pub fn handle_registry_loaded(app: &mut App, result: Result<RegistryIndex, String>) -> Task<Message> {
+pub fn handle_registry_loaded(
+    app: &mut App,
+    result: Result<RegistryIndex, String>,
+) -> Task<Message> {
     match result {
         Ok(index) => {
             app.sync_registry_versions(&index);
@@ -19,7 +24,10 @@ pub fn handle_registry_loaded(app: &mut App, result: Result<RegistryIndex, Strin
     Task::none()
 }
 
-pub fn handle_registry_refreshed(app: &mut App, result: Result<RegistryIndex, String>) -> Task<Message> {
+pub fn handle_registry_refreshed(
+    app: &mut App,
+    result: Result<RegistryIndex, String>,
+) -> Task<Message> {
     app.browse.refreshing = false;
     match result {
         Ok(index) => {
@@ -119,6 +127,33 @@ pub fn handle_uninstall_completed(
         Err((uuid, e)) => {
             app.installed.uninstalling.remove(&uuid);
             app.push_notification(format!("Uninstall failed: {e}"), NotificationKind::Error);
+        }
+    }
+    Task::none()
+}
+
+pub fn handle_author_loaded(app: &mut App, result: Result<AuthorProfile, String>) -> Task<Message> {
+    match result {
+        Ok(profile) => {
+            app.author_profile.loading = AuthorLoadingState::Loaded(profile);
+        }
+        Err(e) => {
+            app.author_profile.loading = AuthorLoadingState::Failed(e);
+        }
+    }
+    Task::none()
+}
+
+pub fn handle_module_reviews_loaded(
+    app: &mut App,
+    result: Result<(ModuleUuid, ReviewsResponse), String>,
+) -> Task<Message> {
+    match result {
+        Ok((_uuid, reviews)) => {
+            app.module_detail.reviews = ReviewsLoadingState::Loaded(reviews);
+        }
+        Err(e) => {
+            app.module_detail.reviews = ReviewsLoadingState::Failed(e);
         }
     }
     Task::none()

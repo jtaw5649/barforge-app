@@ -36,7 +36,10 @@ impl RegistryModule {
         self.name.to_lowercase().contains(&query_lower)
             || self.description.to_lowercase().contains(&query_lower)
             || self.author.to_lowercase().contains(&query_lower)
-            || self.tags.iter().any(|t| t.to_lowercase().contains(&query_lower))
+            || self
+                .tags
+                .iter()
+                .any(|t| t.to_lowercase().contains(&query_lower))
     }
 
     pub fn formatted_downloads(&self) -> String {
@@ -232,7 +235,8 @@ mod tests {
         #[test]
         fn truncated_description_long() {
             let mut module = create_test_registry_module("test");
-            module.description = "This is a very long description that should be truncated".to_string();
+            module.description =
+                "This is a very long description that should be truncated".to_string();
             assert_eq!(module.truncated_description(20), "This is a very lo...");
         }
     }
@@ -303,6 +307,41 @@ mod tests {
             let index = create_test_index();
             let results = index.by_category(ModuleCategory::Weather);
             assert!(results.is_empty());
+        }
+
+        #[test]
+        fn deserialize_full_api_response() {
+            let json = r#"{
+                "version": 1,
+                "modules": [{
+                    "uuid": "weather-wttr@waybar-modules",
+                    "name": "Weather WTTR",
+                    "description": "Weather display using wttr.in",
+                    "author": "johndoe",
+                    "category": "weather",
+                    "icon": "weather-symbolic",
+                    "screenshot": null,
+                    "repo_url": "https://github.com/example/weather",
+                    "downloads": 1500,
+                    "version": "1.0.0",
+                    "last_updated": "2024-12-01T12:00:00Z",
+                    "rating": 4.5,
+                    "verified_author": true,
+                    "tags": ["weather", "forecast"],
+                    "checksum": "abc123"
+                }],
+                "categories": {
+                    "weather": {
+                        "id": "weather",
+                        "name": "Weather",
+                        "icon": "weather-symbolic"
+                    }
+                }
+            }"#;
+            let index: RegistryIndex = serde_json::from_str(json).unwrap();
+            assert_eq!(index.version, 1);
+            assert_eq!(index.modules.len(), 1);
+            assert_eq!(index.modules[0].name, "Weather WTTR");
         }
     }
 }

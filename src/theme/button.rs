@@ -1,7 +1,7 @@
 use iced::widget::button;
 use iced::{Background, Border, Theme};
 
-use super::{darken, lighten, shadow_sm, AppTheme, RADIUS_MD, RADIUS_SM};
+use super::{AppTheme, RADIUS_MD, RADIUS_SM, darken, lighten, shadow_sm};
 
 type ButtonStyleFn = Box<dyn Fn(&Theme, button::Status) -> button::Style>;
 
@@ -28,17 +28,13 @@ pub fn primary_small(theme: AppTheme) -> ButtonStyleFn {
 pub fn primary(theme: AppTheme) -> ButtonStyleFn {
     Box::new(move |_, status| {
         let (background, text, shadow) = match status {
-            button::Status::Hovered => (
-                lighten(theme.accent, 0.08),
-                theme.text_normal,
-                shadow_sm(),
-            ),
+            button::Status::Hovered => {
+                (lighten(theme.accent, 0.08), theme.text_normal, shadow_sm())
+            }
             button::Status::Pressed => (theme.accent, theme.text_normal, iced::Shadow::default()),
-            button::Status::Disabled => (
-                theme.bg_elevated,
-                theme.text_faint,
-                iced::Shadow::default(),
-            ),
+            button::Status::Disabled => {
+                (theme.bg_elevated, theme.text_faint, iced::Shadow::default())
+            }
             _ => (theme.accent, theme.text_normal, shadow_sm()),
         };
 
@@ -171,12 +167,9 @@ pub fn sidebar(theme: AppTheme) -> ButtonStyleFn {
 pub fn sidebar_active(theme: AppTheme) -> ButtonStyleFn {
     Box::new(move |_, status| {
         let background = match status {
-            button::Status::Hovered => iced::Color::from_rgba(
-                theme.accent.r,
-                theme.accent.g,
-                theme.accent.b,
-                0.18,
-            ),
+            button::Status::Hovered => {
+                iced::Color::from_rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.18)
+            }
             _ => theme.sidebar_active,
         };
 
@@ -184,12 +177,7 @@ pub fn sidebar_active(theme: AppTheme) -> ButtonStyleFn {
             background: Some(Background::Color(background)),
             text_color: theme.text_normal,
             border: Border {
-                color: iced::Color::from_rgba(
-                    theme.accent.r,
-                    theme.accent.g,
-                    theme.accent.b,
-                    0.5,
-                ),
+                color: iced::Color::from_rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.5),
                 width: 0.0,
                 radius: RADIUS_SM.into(),
             },

@@ -1,6 +1,6 @@
 use landlock::{
-    Access, AccessFs, AccessNet, LandlockStatus, NetPort, PathBeneath, PathFd, Ruleset,
-    RulesetAttr, RulesetCreatedAttr, RulesetStatus, ABI,
+    ABI, Access, AccessFs, AccessNet, LandlockStatus, NetPort, PathBeneath, PathFd, Ruleset,
+    RulesetAttr, RulesetCreatedAttr, RulesetStatus,
 };
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -102,9 +102,7 @@ pub fn is_allowed_write_path(path: &Path) -> bool {
 pub fn apply(config: &SandboxConfig) -> SandboxResult {
     let waybar_config = dirs::config_dir()
         .map(|p| p.join("waybar"))
-        .unwrap_or_else(|| {
-            PathBuf::from(shellexpand::tilde("~/.config/waybar").to_string())
-        });
+        .unwrap_or_else(|| PathBuf::from(shellexpand::tilde("~/.config/waybar").to_string()));
 
     let cache_dir = dirs::cache_dir()
         .map(|p| p.join("waybar-manager"))
@@ -281,7 +279,9 @@ mod tests {
         assert!(!is_allowed_write_path(Path::new("/etc/shadow")));
         assert!(!is_allowed_write_path(Path::new("/home/user/.bashrc")));
         assert!(!is_allowed_write_path(Path::new("/usr/bin/malicious")));
-        assert!(!is_allowed_write_path(Path::new("/root/.ssh/authorized_keys")));
+        assert!(!is_allowed_write_path(Path::new(
+            "/root/.ssh/authorized_keys"
+        )));
         assert!(!is_allowed_write_path(Path::new("/var/log/auth.log")));
     }
 

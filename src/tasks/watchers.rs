@@ -39,8 +39,17 @@ pub fn watch_omarchy_theme() -> Subscription<Message> {
 
                     match watcher_result {
                         Ok(mut watcher) => {
-                            if watcher.watch(&theme_path, RecursiveMode::NonRecursive).is_ok() {
-                                Some((Message::Tick, WatcherState::Watching { _watcher: watcher, rx }))
+                            if watcher
+                                .watch(&theme_path, RecursiveMode::NonRecursive)
+                                .is_ok()
+                            {
+                                Some((
+                                    Message::Tick,
+                                    WatcherState::Watching {
+                                        _watcher: watcher,
+                                        rx,
+                                    },
+                                ))
                             } else {
                                 Some((Message::Tick, WatcherState::Unavailable))
                             }
@@ -50,15 +59,12 @@ pub fn watch_omarchy_theme() -> Subscription<Message> {
                 }
                 WatcherState::Watching { _watcher, mut rx } => {
                     match timeout(Duration::from_millis(500), rx.recv()).await {
-                        Ok(Some(())) => {
-                            Some((Message::OmarchyThemeChanged, WatcherState::Watching { _watcher, rx }))
-                        }
-                        Ok(None) => {
-                            Some((Message::Tick, WatcherState::Ready))
-                        }
-                        Err(_) => {
-                            Some((Message::Tick, WatcherState::Watching { _watcher, rx }))
-                        }
+                        Ok(Some(())) => Some((
+                            Message::OmarchyThemeChanged,
+                            WatcherState::Watching { _watcher, rx },
+                        )),
+                        Ok(None) => Some((Message::Tick, WatcherState::Ready)),
+                        Err(_) => Some((Message::Tick, WatcherState::Watching { _watcher, rx })),
                     }
                 }
                 WatcherState::Unavailable => {

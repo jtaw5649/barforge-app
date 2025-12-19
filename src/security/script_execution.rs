@@ -167,8 +167,7 @@ mod tests {
     #[test]
     fn successful_script_execution() {
         let (dir, script) = setup_test_script("#!/bin/bash\necho 'hello'");
-        let result =
-            run_script_unsandboxed(&script, dir.path(), Duration::from_secs(5)).unwrap();
+        let result = run_script_unsandboxed(&script, dir.path(), Duration::from_secs(5)).unwrap();
         assert!(result.success);
         assert!(result.stdout.contains("hello"));
     }
@@ -176,8 +175,7 @@ mod tests {
     #[test]
     fn script_with_nonzero_exit() {
         let (dir, script) = setup_test_script("#!/bin/bash\nexit 42");
-        let result =
-            run_script_unsandboxed(&script, dir.path(), Duration::from_secs(5)).unwrap();
+        let result = run_script_unsandboxed(&script, dir.path(), Duration::from_secs(5)).unwrap();
         assert!(!result.success);
         assert_eq!(result.exit_code, Some(42));
     }
@@ -185,16 +183,14 @@ mod tests {
     #[test]
     fn script_timeout() {
         let (dir, script) = setup_test_script("#!/bin/bash\nsleep 10");
-        let result =
-            run_script_unsandboxed(&script, dir.path(), Duration::from_millis(500));
+        let result = run_script_unsandboxed(&script, dir.path(), Duration::from_millis(500));
         assert!(matches!(result, Err(ScriptError::Timeout(_))));
     }
 
     #[test]
     fn script_captures_stderr() {
         let (dir, script) = setup_test_script("#!/bin/bash\necho 'error' >&2");
-        let result =
-            run_script_unsandboxed(&script, dir.path(), Duration::from_secs(5)).unwrap();
+        let result = run_script_unsandboxed(&script, dir.path(), Duration::from_secs(5)).unwrap();
         assert!(result.stderr.contains("error"));
     }
 }

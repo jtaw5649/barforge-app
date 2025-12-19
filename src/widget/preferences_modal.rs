@@ -1,13 +1,17 @@
-use iced::widget::{button, checkbox, column, container, pick_list, row, scrollable, text, text_input, Space};
+use iced::widget::{
+    Space, button, checkbox, column, container, pick_list, row, scrollable, text, text_input,
+};
 use iced::{Alignment, Background, Border, Element, Length};
 
 use crate::app::message::Message;
 use crate::domain::ModuleUuid;
-use crate::services::{ModulePreferences, PreferenceField, PreferenceValue, PreferencesSchema, SelectOption};
+use crate::services::{
+    ModulePreferences, PreferenceField, PreferenceValue, PreferencesSchema, SelectOption,
+};
 use crate::theme::{
-    button as btn_style, menu_style, pick_list_style, AppTheme, PickListColors, FONT_LG, FONT_MD,
-    FONT_SM, FONT_XS, NUMBER_INPUT_WIDTH, PREFERENCES_MODAL_MAX_HEIGHT, PREFERENCES_MODAL_WIDTH,
-    RADIUS_LG, RADIUS_MD, RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XL, SPACE_XS,
+    AppTheme, FONT_LG, FONT_MD, FONT_SM, FONT_XS, NUMBER_INPUT_WIDTH, PREFERENCES_MODAL_MAX_HEIGHT,
+    PREFERENCES_MODAL_WIDTH, PickListColors, RADIUS_LG, RADIUS_MD, RADIUS_SM, SPACE_LG, SPACE_MD,
+    SPACE_SM, SPACE_XL, SPACE_XS, button as btn_style, menu_style, pick_list_style,
 };
 
 fn error_modal<'a>(message: &'a str, theme: &'a AppTheme) -> Element<'a, Message> {
@@ -17,7 +21,9 @@ fn error_modal<'a>(message: &'a str, theme: &'a AppTheme) -> Element<'a, Message
         .width(Length::Fill)
         .height(Length::Fill)
         .style(move |_: &iced::Theme| iced::widget::container::Style {
-            background: Some(Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+            background: Some(Background::Color(iced::Color::from_rgba(
+                0.0, 0.0, 0.0, 0.5,
+            ))),
             ..Default::default()
         });
 
@@ -68,7 +74,9 @@ pub fn preferences_modal<'a>(
         .width(Length::Fill)
         .height(Length::Fill)
         .style(move |_: &iced::Theme| iced::widget::container::Style {
-            background: Some(Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+            background: Some(Background::Color(iced::Color::from_rgba(
+                0.0, 0.0, 0.0, 0.5,
+            ))),
             ..Default::default()
         });
 
@@ -170,10 +178,7 @@ fn render_field<'a>(
             placeholder,
             ..
         } => {
-            let current_value = values
-                .get(key)
-                .and_then(|v| v.as_string())
-                .unwrap_or("");
+            let current_value = values.get(key).and_then(|v| v.as_string()).unwrap_or("");
 
             let key_owned = key.clone();
             let input = text_input(placeholder.as_deref().unwrap_or(""), current_value)
@@ -210,11 +215,8 @@ fn render_field<'a>(
                     }
                 });
 
-            let mut col = column![
-                text(label).size(FONT_MD).color(theme.text_normal),
-                input,
-            ]
-            .spacing(SPACE_XS);
+            let mut col = column![text(label).size(FONT_MD).color(theme.text_normal), input,]
+                .spacing(SPACE_XS);
 
             if let Some(desc) = description {
                 col = col.push(text(desc).size(FONT_XS).color(theme.text_muted));
@@ -290,27 +292,20 @@ fn render_field<'a>(
 
             let key_owned = key.clone();
             let picker_colors = PickListColors::from_theme(&theme_copy);
-            let picker = pick_list(
-                options.clone(),
-                selected,
-                move |opt: SelectOption| {
-                    Message::PreferenceChanged(
-                        uuid_owned.clone(),
-                        key_owned.clone(),
-                        PreferenceValue::String(opt.value),
-                    )
-                },
-            )
+            let picker = pick_list(options.clone(), selected, move |opt: SelectOption| {
+                Message::PreferenceChanged(
+                    uuid_owned.clone(),
+                    key_owned.clone(),
+                    PreferenceValue::String(opt.value),
+                )
+            })
             .padding(SPACE_SM)
             .width(Length::Fill)
             .style(pick_list_style(picker_colors, RADIUS_SM))
             .menu_style(menu_style(picker_colors, RADIUS_SM, 0.0, 0.0));
 
-            let mut col = column![
-                text(label).size(FONT_MD).color(theme.text_normal),
-                picker,
-            ]
-            .spacing(SPACE_XS);
+            let mut col = column![text(label).size(FONT_MD).color(theme.text_normal), picker,]
+                .spacing(SPACE_XS);
 
             if let Some(desc) = description {
                 col = col.push(text(desc).size(FONT_XS).color(theme.text_muted));
@@ -398,9 +393,12 @@ fn render_field<'a>(
 
             let mut col = column![
                 text(label).size(FONT_MD).color(theme.text_normal),
-                row![input, text(range_text).size(FONT_XS).color(theme.text_muted)]
-                    .spacing(SPACE_SM)
-                    .align_y(Alignment::Center),
+                row![
+                    input,
+                    text(range_text).size(FONT_XS).color(theme.text_muted)
+                ]
+                .spacing(SPACE_SM)
+                .align_y(Alignment::Center),
             ]
             .spacing(SPACE_XS);
 

@@ -50,8 +50,10 @@ pub enum DepCheckError {
     ExecutionFailed(String),
 }
 
-const VALID_BINARY_CHARS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.";
-const VALID_PYTHON_MODULE_CHARS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+const VALID_BINARY_CHARS: &str =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+.";
+const VALID_PYTHON_MODULE_CHARS: &str =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
 
 #[must_use]
 pub fn is_valid_binary_name(name: &str) -> bool {
@@ -264,10 +266,7 @@ mod tests {
     fn version_extraction_finds_semver() {
         assert_eq!(extract_version("version 1.2.3"), Some("1.2.3".to_string()));
         assert_eq!(extract_version("version 2.0.0"), Some("2.0.0".to_string()));
-        assert_eq!(
-            extract_version("Python 3.11.5"),
-            Some("3.11.5".to_string())
-        );
+        assert_eq!(extract_version("Python 3.11.5"), Some("3.11.5".to_string()));
         assert_eq!(
             extract_version("git version 2.42.0"),
             Some("2.42.0".to_string())
@@ -350,6 +349,10 @@ mod tests {
         let report = check_dependencies(&specs);
         assert!(!report.all_satisfied);
         assert_eq!(report.missing_required.len(), 1);
-        assert!(report.missing_required.contains(&"nonexistent-xyz".to_string()));
+        assert!(
+            report
+                .missing_required
+                .contains(&"nonexistent-xyz".to_string())
+        );
     }
 }

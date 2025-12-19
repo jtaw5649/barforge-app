@@ -66,7 +66,10 @@ pub fn handle_position_changed(app: &mut App, result: Result<String, String>) ->
                     .as_ref()
                     .map(|p| format!("{}", p.section))
                     .unwrap_or_else(|| "center".to_string());
-                app.push_notification(format!("Moved to {section_name}"), NotificationKind::Success);
+                app.push_notification(
+                    format!("Moved to {section_name}"),
+                    NotificationKind::Success,
+                );
             }
             tasks::load_installed()
         }
@@ -182,7 +185,11 @@ pub fn handle_update_all_completed(app: &mut App, result: Result<usize, String>)
     match result {
         Ok(count) => {
             app.push_notification(
-                format!("Updated {} module{}", count, if count == 1 { "" } else { "s" }),
+                format!(
+                    "Updated {} module{}",
+                    count,
+                    if count == 1 { "" } else { "s" }
+                ),
                 NotificationKind::Success,
             );
             tasks::load_installed()

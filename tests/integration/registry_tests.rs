@@ -1,4 +1,4 @@
-use crate::helpers::{mock_registry_failure, mock_registry_success, TestContext};
+use crate::helpers::{TestContext, mock_registry_failure, mock_registry_success};
 use waybar_registry_types::{ModuleCategory, RegistryIndex};
 
 #[tokio::test]
@@ -6,7 +6,9 @@ async fn test_mock_server_serves_registry() {
     let ctx = TestContext::new().await;
     mock_registry_success(&ctx).await;
 
-    let response = reqwest::get(&ctx.registry_url()).await.expect("request failed");
+    let response = reqwest::get(&ctx.registry_url())
+        .await
+        .expect("request failed");
 
     assert_eq!(response.status(), 200);
 
@@ -31,7 +33,9 @@ async fn test_registry_module_has_correct_category() {
     let ctx = TestContext::new().await;
     mock_registry_success(&ctx).await;
 
-    let response = reqwest::get(&ctx.registry_url()).await.expect("request failed");
+    let response = reqwest::get(&ctx.registry_url())
+        .await
+        .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
     assert_eq!(registry.modules[0].category, ModuleCategory::System);
@@ -43,7 +47,9 @@ async fn test_registry_module_has_tags() {
     let ctx = TestContext::new().await;
     mock_registry_success(&ctx).await;
 
-    let response = reqwest::get(&ctx.registry_url()).await.expect("request failed");
+    let response = reqwest::get(&ctx.registry_url())
+        .await
+        .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
     assert!(registry.modules[0].tags.contains(&"cpu".to_string()));
@@ -55,7 +61,9 @@ async fn test_registry_search_finds_by_name() {
     let ctx = TestContext::new().await;
     mock_registry_success(&ctx).await;
 
-    let response = reqwest::get(&ctx.registry_url()).await.expect("request failed");
+    let response = reqwest::get(&ctx.registry_url())
+        .await
+        .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
     let results = registry.search("CPU");
@@ -69,7 +77,9 @@ async fn test_registry_search_finds_by_tag() {
     let ctx = TestContext::new().await;
     mock_registry_success(&ctx).await;
 
-    let response = reqwest::get(&ctx.registry_url()).await.expect("request failed");
+    let response = reqwest::get(&ctx.registry_url())
+        .await
+        .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
     let results = registry.search("ram");
@@ -83,7 +93,9 @@ async fn test_registry_by_category_filters_correctly() {
     let ctx = TestContext::new().await;
     mock_registry_success(&ctx).await;
 
-    let response = reqwest::get(&ctx.registry_url()).await.expect("request failed");
+    let response = reqwest::get(&ctx.registry_url())
+        .await
+        .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
     let system_modules = registry.by_category(ModuleCategory::System);
@@ -96,7 +108,9 @@ async fn test_mock_server_can_return_error() {
     let ctx = TestContext::new().await;
     mock_registry_failure(&ctx, 500).await;
 
-    let response = reqwest::get(&ctx.registry_url()).await.expect("request failed");
+    let response = reqwest::get(&ctx.registry_url())
+        .await
+        .expect("request failed");
 
     assert_eq!(response.status(), 500);
 }
@@ -106,7 +120,9 @@ async fn test_registry_find_by_uuid() {
     let ctx = TestContext::new().await;
     mock_registry_success(&ctx).await;
 
-    let response = reqwest::get(&ctx.registry_url()).await.expect("request failed");
+    let response = reqwest::get(&ctx.registry_url())
+        .await
+        .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
     let found = registry.find_by_uuid("cpu-monitor@testauthor");
@@ -120,7 +136,9 @@ async fn test_registry_find_by_uuid_not_found() {
     let ctx = TestContext::new().await;
     mock_registry_success(&ctx).await;
 
-    let response = reqwest::get(&ctx.registry_url()).await.expect("request failed");
+    let response = reqwest::get(&ctx.registry_url())
+        .await
+        .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
     let found = registry.find_by_uuid("nonexistent@author");

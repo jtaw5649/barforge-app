@@ -1,12 +1,12 @@
-use iced::widget::{button, column, container, row, text, Space};
+use iced::widget::{Space, button, column, container, row, text};
 use iced::{Background, Border, Element, Length, Vector};
 
 use crate::app::message::Message;
 use crate::app::state::Screen;
-use crate::icons::{app_logo, omarchy_icon, Icon};
+use crate::icons::{Icon, app_logo, omarchy_icon};
 use crate::theme::{
-    button as btn_style, AppTheme, ThemeMode, FONT_LG, FONT_SM, FONT_XS, ICON_LG, ICON_MD,
-    ICON_SM, SIDEBAR_WIDTH, SPACE_MD, SPACE_SM, SPACE_XL, SPACE_XS,
+    AppTheme, FONT_LG, FONT_SM, FONT_XS, ICON_LG, ICON_MD, ICON_SM, SIDEBAR_WIDTH, SPACE_MD,
+    SPACE_SM, SPACE_XL, SPACE_XS, ThemeMode, button as btn_style,
 };
 
 pub fn sidebar(
@@ -26,15 +26,25 @@ pub fn sidebar(
 
     let browse_btn = {
         let is_active = matches!(current, Screen::Browse);
-        let color = if is_active { theme.text_normal } else { theme.text_muted };
+        let color = if is_active {
+            theme.text_normal
+        } else {
+            theme.text_muted
+        };
         button(
             row![
                 Icon::Browse.colored(ICON_MD, color),
                 text("Browse").size(FONT_SM).color(color)
-            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+            ]
+            .spacing(SPACE_SM)
+            .align_y(iced::Alignment::Center),
         )
         .on_press(Message::Navigate(Screen::Browse))
-        .style(if is_active { btn_style::sidebar_active(theme_copy) } else { btn_style::sidebar(theme_copy) })
+        .style(if is_active {
+            btn_style::sidebar_active(theme_copy)
+        } else {
+            btn_style::sidebar(theme_copy)
+        })
         .width(Length::Fill)
         .padding([SPACE_MD, SPACE_SM])
     };
@@ -46,64 +56,101 @@ pub fn sidebar(
 
     let installed_btn = {
         let is_active = matches!(current, Screen::Installed);
-        let color = if is_active { theme.text_normal } else { theme.text_muted };
+        let color = if is_active {
+            theme.text_normal
+        } else {
+            theme.text_muted
+        };
         let content = if installed_count > 0 {
-             row![
+            row![
                 Icon::Installed.colored(ICON_MD, color),
                 text("Installed").size(FONT_SM).color(color),
                 Space::new().width(Length::Fill),
-                container(text(installed_count.to_string()).size(FONT_XS).color(theme.text_normal))
-                    .padding([2.0, 8.0])
-                    .style(move |_| container::Style {
-                        background: Some(Background::Color(theme_copy.bg_elevated)),
-                        border: Border { radius: 10.0.into(), ..Default::default() },
+                container(
+                    text(installed_count.to_string())
+                        .size(FONT_XS)
+                        .color(theme.text_normal)
+                )
+                .padding([2.0, 8.0])
+                .style(move |_| container::Style {
+                    background: Some(Background::Color(theme_copy.bg_elevated)),
+                    border: Border {
+                        radius: 10.0.into(),
                         ..Default::default()
-                    })
-            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+                    },
+                    ..Default::default()
+                })
+            ]
+            .spacing(SPACE_SM)
+            .align_y(iced::Alignment::Center)
         } else {
-             row![
+            row![
                 Icon::Installed.colored(ICON_MD, color),
                 text("Installed").size(FONT_SM).color(color)
-            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+            ]
+            .spacing(SPACE_SM)
+            .align_y(iced::Alignment::Center)
         };
 
         button(content)
             .on_press(Message::Navigate(Screen::Installed))
-            .style(if is_active { btn_style::sidebar_active(theme_copy) } else { btn_style::sidebar(theme_copy) })
+            .style(if is_active {
+                btn_style::sidebar_active(theme_copy)
+            } else {
+                btn_style::sidebar(theme_copy)
+            })
             .width(Length::Fill)
             .padding([SPACE_MD, SPACE_SM])
     };
 
     let updates_btn = {
         let is_active = matches!(current, Screen::Updates);
-        let color = if is_active { theme.text_normal } else { theme.text_muted };
+        let color = if is_active {
+            theme.text_normal
+        } else {
+            theme.text_muted
+        };
         let content = if update_count > 0 {
-             row![
+            row![
                 Icon::Updates.colored(ICON_MD, color),
                 text("Updates").size(FONT_SM).color(color),
                 Space::new().width(Length::Fill),
-                container(text(update_count.to_string()).size(FONT_XS).color(theme.bg_base))
-                    .padding([2.0, 8.0])
-                    .style(move |_| container::Style {
-                        background: Some(Background::Color(theme_copy.warning)),
-                        border: Border { radius: 10.0.into(), ..Default::default() },
+                container(
+                    text(update_count.to_string())
+                        .size(FONT_XS)
+                        .color(theme.bg_base)
+                )
+                .padding([2.0, 8.0])
+                .style(move |_| container::Style {
+                    background: Some(Background::Color(theme_copy.warning)),
+                    border: Border {
+                        radius: 10.0.into(),
                         ..Default::default()
-                    })
-            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+                    },
+                    ..Default::default()
+                })
+            ]
+            .spacing(SPACE_SM)
+            .align_y(iced::Alignment::Center)
         } else {
-             row![
+            row![
                 Icon::Updates.colored(ICON_MD, color),
                 text("Updates").size(FONT_SM).color(color)
-            ].spacing(SPACE_SM).align_y(iced::Alignment::Center)
+            ]
+            .spacing(SPACE_SM)
+            .align_y(iced::Alignment::Center)
         };
 
         button(content)
             .on_press(Message::Navigate(Screen::Updates))
-            .style(if is_active { btn_style::sidebar_active(theme_copy) } else { btn_style::sidebar(theme_copy) })
+            .style(if is_active {
+                btn_style::sidebar_active(theme_copy)
+            } else {
+                btn_style::sidebar(theme_copy)
+            })
             .width(Length::Fill)
             .padding([SPACE_MD, SPACE_SM])
     };
-
 
     let nav = column![
         marketplace_label,

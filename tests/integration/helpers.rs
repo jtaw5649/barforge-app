@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use tempfile::TempDir;
-use wiremock::{matchers::method, matchers::path, Mock, MockServer, ResponseTemplate};
+use wiremock::{Mock, MockServer, ResponseTemplate, matchers::method, matchers::path};
 
 pub struct TestContext {
     pub mock_server: MockServer,

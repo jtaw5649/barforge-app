@@ -1,6 +1,6 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use waybar_manager::app::state::{SortField, SortOrder};
-use waybar_manager::testing::{test_app_with_registry, RegistryModuleBuilder};
+use waybar_manager::testing::{RegistryModuleBuilder, test_app_with_registry};
 use waybar_registry_types::ModuleCategory;
 
 fn generate_modules(count: usize) -> Vec<waybar_registry_types::RegistryModule> {

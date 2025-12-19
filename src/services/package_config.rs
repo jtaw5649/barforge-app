@@ -168,7 +168,10 @@ write_paths = ["/tmp/module-cache"]
 "#;
         let pkg = PackageToml::from_str(toml).unwrap();
         assert_eq!(pkg.package.name, "full-module");
-        assert_eq!(pkg.package.description, Some("A full test module".to_string()));
+        assert_eq!(
+            pkg.package.description,
+            Some("A full test module".to_string())
+        );
         assert!(pkg.permissions.network);
         assert_eq!(pkg.permissions.ports, vec![80, 443]);
     }

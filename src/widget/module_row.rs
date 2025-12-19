@@ -1,12 +1,12 @@
-use iced::widget::{button, column, container, pick_list, row, text, toggler, Space};
+use iced::widget::{Space, button, column, container, pick_list, row, text, toggler};
 use iced::{Alignment, Element, Length};
 
 use crate::app::message::Message;
 use crate::app::state::ConfirmationAction;
 use crate::domain::{BarSection, InstalledModule};
 use crate::theme::{
-    button as btn_style, container as cont_style, menu_style, pick_list_style, AppTheme,
-    PickListColors, FONT_2XS, FONT_SM, FONT_XS, RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM,
+    AppTheme, FONT_2XS, FONT_SM, FONT_XS, PickListColors, RADIUS_SM, SPACE_LG, SPACE_MD, SPACE_SM,
+    button as btn_style, container as cont_style, menu_style, pick_list_style,
 };
 
 pub fn module_row(
@@ -52,14 +52,12 @@ pub fn module_row(
 
     let picker_colors = PickListColors::from_theme(theme);
 
-    let position_picker = pick_list(
-        BarSection::all(),
-        Some(current_section),
-        move |section| Message::SetModulePosition {
+    let position_picker = pick_list(BarSection::all(), Some(current_section), move |section| {
+        Message::SetModulePosition {
             uuid: uuid_position.clone(),
             section,
-        },
-    )
+        }
+    })
     .padding([SPACE_SM / 2.0, SPACE_SM])
     .text_size(FONT_XS)
     .style(pick_list_style(picker_colors, RADIUS_SM))
@@ -81,10 +79,12 @@ pub fn module_row(
             .into()
     } else {
         button(text("Uninstall").size(FONT_XS))
-            .on_press(Message::RequestConfirmation(ConfirmationAction::UninstallModule {
-                uuid: uuid_uninstall,
-                name: name_for_confirm,
-            }))
+            .on_press(Message::RequestConfirmation(
+                ConfirmationAction::UninstallModule {
+                    uuid: uuid_uninstall,
+                    name: name_for_confirm,
+                },
+            ))
             .style(btn_style::danger(*theme))
             .padding([SPACE_SM, SPACE_MD])
             .into()

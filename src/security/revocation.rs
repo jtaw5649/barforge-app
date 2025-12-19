@@ -60,11 +60,9 @@ pub async fn check_revocation(
                     );
                     Ok(())
                 }
-                OfflinePolicy::FailClosed => {
-                    Err(RevocationError::NetworkError(format!(
-                        "Cannot verify module safety (network unavailable): {e}"
-                    )))
-                }
+                OfflinePolicy::FailClosed => Err(RevocationError::NetworkError(format!(
+                    "Cannot verify module safety (network unavailable): {e}"
+                ))),
             };
         }
         Err(e) => return Err(RevocationError::NetworkError(e.to_string())),
@@ -86,7 +84,9 @@ pub async fn check_revocation(
         return Err(RevocationError::Revoked {
             uuid: uuid.to_string(),
             version: version.to_string(),
-            reason: check.reason.unwrap_or_else(|| "No reason provided".to_string()),
+            reason: check
+                .reason
+                .unwrap_or_else(|| "No reason provided".to_string()),
         });
     }
 

@@ -46,7 +46,13 @@ const SENSITIVE_ENV_VARS: &[&str] = &[
     "PRIVATE_KEY",
     "TOKEN",
 ];
-const EXECUTION_PATTERNS: &[&str] = &["eval $(", "| bash", "| sh", "base64 -d |", "base64 --decode |"];
+const EXECUTION_PATTERNS: &[&str] = &[
+    "eval $(",
+    "| bash",
+    "| sh",
+    "base64 -d |",
+    "base64 --decode |",
+];
 
 #[must_use]
 pub fn inspect_script_safety(content: &str) -> ScriptInspectionResult {
@@ -57,7 +63,9 @@ pub fn inspect_script_safety(content: &str) -> ScriptInspectionResult {
 
         for cmd in NETWORK_COMMANDS {
             if contains_command(&line_lower, cmd) {
-                result.warnings.push(format!("Network command detected: {cmd}"));
+                result
+                    .warnings
+                    .push(format!("Network command detected: {cmd}"));
                 result
                     .risky_patterns
                     .push(RiskyPattern::NetworkCommand(cmd.to_string()));
@@ -164,7 +172,12 @@ mod tests {
         let script = "#!/bin/bash\ncat /etc/passwd > /tmp/stolen";
         let result = inspect_script_safety(script);
         assert!(result.has_warnings());
-        assert!(result.risky_patterns.iter().any(|p| matches!(p, RiskyPattern::SensitivePath(_))));
+        assert!(
+            result
+                .risky_patterns
+                .iter()
+                .any(|p| matches!(p, RiskyPattern::SensitivePath(_)))
+        );
     }
 
     #[test]
@@ -179,7 +192,12 @@ mod tests {
         let script = "#!/bin/bash\nrm -rf /";
         let result = inspect_script_safety(script);
         assert!(result.has_warnings());
-        assert!(result.risky_patterns.iter().any(|p| matches!(p, RiskyPattern::SystemModification(_))));
+        assert!(
+            result
+                .risky_patterns
+                .iter()
+                .any(|p| matches!(p, RiskyPattern::SystemModification(_)))
+        );
     }
 
     #[test]

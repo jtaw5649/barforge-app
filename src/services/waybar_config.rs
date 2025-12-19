@@ -273,7 +273,10 @@ mod tests {
 
         let parsed: serde_json::Value = serde_json::from_str(&result2).unwrap();
         let center = parsed["modules-center"].as_array().unwrap();
-        let clock_count = center.iter().filter(|v| v.as_str() == Some("clock")).count();
+        let clock_count = center
+            .iter()
+            .filter(|v| v.as_str() == Some("clock"))
+            .count();
         assert_eq!(clock_count, 1);
     }
 
@@ -333,7 +336,12 @@ mod tests {
         let waybar = r#"{"layer": "top"}"#;
         let module = r#"{"custom/script": {"exec": "$MODULE_PATH/script.sh"}}"#;
 
-        let result = merge_module_config(waybar, module, "/home/user/.local/share/waybar-manager/modules/test@ns").unwrap();
+        let result = merge_module_config(
+            waybar,
+            module,
+            "/home/user/.local/share/waybar-manager/modules/test@ns",
+        )
+        .unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
 
         assert_eq!(
@@ -397,7 +405,10 @@ mod tests {
 
         let content = r#"{"exec": "echo $PREF_message", "interval": $PREF_interval}"#;
         let mut prefs = HashMap::new();
-        prefs.insert("message".to_string(), PreferenceValue::String("Hello".to_string()));
+        prefs.insert(
+            "message".to_string(),
+            PreferenceValue::String("Hello".to_string()),
+        );
         prefs.insert("interval".to_string(), PreferenceValue::Number(10.0));
 
         let result = substitute_preferences(content, &prefs);

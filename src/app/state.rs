@@ -4,16 +4,18 @@ use std::time::{Duration, Instant};
 
 use iced::widget::image;
 
-use crate::domain::{InstalledModule, ModuleCategory, RegistryIndex};
+use crate::domain::{
+    AuthorProfile, InstalledModule, ModuleCategory, RegistryIndex, ReviewsResponse,
+};
 use crate::security::SandboxStatus;
 use crate::services::{
-    is_omarchy_available, load_omarchy_palette, load_settings, InstallStage, ModulePreferences,
-    OmarchyPalette, PreferencesSchema,
+    InstallStage, ModulePreferences, OmarchyPalette, PreferencesSchema, is_omarchy_available,
+    load_omarchy_palette, load_settings,
 };
 use crate::theme::{AppTheme, ThemeMode};
 
-use std::sync::mpsc::Receiver;
 use crate::tray::TrayEvent;
+use std::sync::mpsc::Receiver;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum Screen {
@@ -23,6 +25,7 @@ pub enum Screen {
     Updates,
     Settings,
     ModuleDetail(String),
+    AuthorProfile(String),
 }
 
 impl Screen {
@@ -33,6 +36,7 @@ impl Screen {
             Screen::Updates => "Updates",
             Screen::Settings => "Settings",
             Screen::ModuleDetail(_) => "Module Detail",
+            Screen::AuthorProfile(_) => "Author Profile",
         }
     }
 
@@ -78,7 +82,12 @@ pub enum SortField {
 
 impl SortField {
     pub fn all() -> &'static [Self] {
-        &[Self::Name, Self::Downloads, Self::RecentlyUpdated, Self::Rating]
+        &[
+            Self::Name,
+            Self::Downloads,
+            Self::RecentlyUpdated,
+            Self::Rating,
+        ]
     }
 }
 
@@ -183,10 +192,34 @@ pub enum ScreenshotState {
 }
 
 #[derive(Debug, Clone, Default)]
+pub enum ReviewsLoadingState {
+    #[default]
+    NotLoaded,
+    Loading,
+    Loaded(ReviewsResponse),
+    Failed(String),
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct ModuleDetailState {
     pub screenshot: ScreenshotState,
     pub installing: bool,
     pub install_stage: Option<InstallStage>,
+    pub reviews: ReviewsLoadingState,
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum AuthorLoadingState {
+    #[default]
+    NotLoaded,
+    Loading,
+    Loaded(AuthorProfile),
+    Failed(String),
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct AuthorProfileState {
+    pub loading: AuthorLoadingState,
 }
 
 #[derive(Debug, Clone)]
@@ -226,6 +259,7 @@ pub struct App {
     pub omarchy_palette: Option<OmarchyPalette>,
 
     pub module_detail: ModuleDetailState,
+    pub author_profile: AuthorProfileState,
     pub confirmation: ConfirmationState,
     pub preferences: PreferencesState,
 
@@ -288,6 +322,7 @@ impl Default for App {
             theme,
             omarchy_palette,
             module_detail: ModuleDetailState::default(),
+            author_profile: AuthorProfileState::default(),
             confirmation: ConfirmationState::default(),
             preferences: PreferencesState::default(),
             spinner_frame: 0,
@@ -348,16 +383,20 @@ impl App {
     pub fn apply_debounced_searches(&mut self) {
         const DEBOUNCE_MS: u64 = 150;
 
-        if let (Some(query), Some(start)) = (&self.browse.pending_search, self.browse.search_debounce_start)
-            && start.elapsed() >= Duration::from_millis(DEBOUNCE_MS)
+        if let (Some(query), Some(start)) = (
+            &self.browse.pending_search,
+            self.browse.search_debounce_start,
+        ) && start.elapsed() >= Duration::from_millis(DEBOUNCE_MS)
         {
             self.browse.search_query = query.clone();
             self.browse.pending_search = None;
             self.browse.search_debounce_start = None;
         }
 
-        if let (Some(query), Some(start)) = (&self.installed.pending_search, self.installed.search_debounce_start)
-            && start.elapsed() >= Duration::from_millis(DEBOUNCE_MS)
+        if let (Some(query), Some(start)) = (
+            &self.installed.pending_search,
+            self.installed.search_debounce_start,
+        ) && start.elapsed() >= Duration::from_millis(DEBOUNCE_MS)
         {
             self.installed.search_query = query.clone();
             self.installed.pending_search = None;
@@ -366,11 +405,17 @@ impl App {
     }
 
     pub fn browse_search_display(&self) -> &str {
-        self.browse.pending_search.as_deref().unwrap_or(&self.browse.search_query)
+        self.browse
+            .pending_search
+            .as_deref()
+            .unwrap_or(&self.browse.search_query)
     }
 
     pub fn installed_search_display(&self) -> &str {
-        self.installed.pending_search.as_deref().unwrap_or(&self.installed.search_query)
+        self.installed
+            .pending_search
+            .as_deref()
+            .unwrap_or(&self.installed.search_query)
     }
 
     pub fn push_notification(&mut self, message: String, kind: NotificationKind) {
@@ -399,8 +444,7 @@ impl App {
             .iter()
             .filter(|m| {
                 let matches_search = query.is_empty() || m.matches_search(query);
-                let matches_category =
-                    category.is_none() || category.as_ref() == Some(&m.category);
+                let matches_category = category.is_none() || category.as_ref() == Some(&m.category);
                 let matches_verified = !verified_only || m.verified_author;
                 matches_search && matches_category && matches_verified
             })
@@ -414,7 +458,9 @@ impl App {
                 SortField::Rating => {
                     let a_rating = a.rating.unwrap_or(0.0);
                     let b_rating = b.rating.unwrap_or(0.0);
-                    a_rating.partial_cmp(&b_rating).unwrap_or(std::cmp::Ordering::Equal)
+                    a_rating
+                        .partial_cmp(&b_rating)
+                        .unwrap_or(std::cmp::Ordering::Equal)
                 }
             };
             match self.browse.sort_order {
@@ -443,7 +489,10 @@ impl App {
     }
 
     pub fn update_count(&self) -> usize {
-        self.installed_modules.iter().filter(|m| m.has_update()).count()
+        self.installed_modules
+            .iter()
+            .filter(|m| m.has_update())
+            .count()
     }
 
     pub fn save_settings(&self) {

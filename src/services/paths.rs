@@ -4,9 +4,10 @@ use std::time::Duration;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 
-pub const REGISTRY_URL: &str = "https://waybar-registry-api.jtaw.workers.dev/api/v1/index";
-pub const SECURITY_CHECK_URL: &str = "https://waybar-registry-api.jtaw.workers.dev/security/check";
-pub const PACKAGES_BASE_URL: &str = "https://waybar-registry-api.jtaw.workers.dev/packages";
+pub const API_BASE_URL: &str = "https://api.waybarmodules.dev";
+pub const REGISTRY_URL: &str = "https://api.waybarmodules.dev/api/v1/index";
+pub const SECURITY_CHECK_URL: &str = "https://api.waybarmodules.dev/security/check";
+pub const PACKAGES_BASE_URL: &str = "https://api.waybarmodules.dev/packages";
 
 #[must_use]
 pub fn package_url(uuid: &str, version: &str) -> String {
@@ -34,7 +35,8 @@ pub static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| {
         })
 });
 
-static HOME_DIR: Lazy<PathBuf> = Lazy::new(|| dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")));
+static HOME_DIR: Lazy<PathBuf> =
+    Lazy::new(|| dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")));
 
 static DATA_DIR: Lazy<PathBuf> = Lazy::new(|| {
     dirs::data_dir()
@@ -222,5 +224,13 @@ mod tests {
     #[test]
     fn test_security_check_url_constant() {
         assert!(SECURITY_CHECK_URL.contains("security/check"));
+    }
+
+    #[test]
+    fn api_urls_use_custom_domain() {
+        assert!(API_BASE_URL.contains("api.waybarmodules.dev"));
+        assert!(REGISTRY_URL.contains("api.waybarmodules.dev"));
+        assert!(SECURITY_CHECK_URL.contains("api.waybarmodules.dev"));
+        assert!(PACKAGES_BASE_URL.contains("api.waybarmodules.dev"));
     }
 }

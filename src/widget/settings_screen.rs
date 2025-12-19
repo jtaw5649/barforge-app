@@ -1,12 +1,12 @@
-use iced::widget::{button, checkbox, column, container, row, scrollable, text, Space};
+use iced::widget::{Space, button, checkbox, column, container, row, scrollable, text};
 use iced::{Alignment, Element, Length};
 
 use crate::app::message::Message;
 use crate::icons::Icon;
 use crate::theme::{
-    button as btn_style, checkbox as chk_style, container as cont_style, AppTheme, FONT_2XL,
-    FONT_LG, FONT_MD, FONT_SM, FONT_XS, ICON_SM, SETTINGS_CONTENT_MAX_WIDTH, SPACE_LG, SPACE_MD,
-    SPACE_SM, SPACE_XL, SPACE_XS,
+    AppTheme, FONT_2XL, FONT_LG, FONT_MD, FONT_SM, FONT_XS, ICON_SM, SETTINGS_CONTENT_MAX_WIDTH,
+    SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XL, SPACE_XS, button as btn_style, checkbox as chk_style,
+    container as cont_style,
 };
 
 const GITHUB_URL: &str = "https://github.com/jtaw5649/waybar-manager";
