@@ -1,4 +1,6 @@
-<h1 align="center">Waybar Manager</h1>
+<p align="center">
+  <img src="assets/og.png" alt="Waybar Manager" width="800">
+</p>
 
 <p align="center">
   <b>Browse, install, and manage waybar modules from a central registry.</b>
@@ -18,6 +20,31 @@
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License">
   <img src="https://img.shields.io/github/v/release/jtaw5649/waybar-manager?style=flat-square" alt="Release">
 </p>
+
+---
+
+## Screenshots
+
+<details open>
+<summary><b>Browse Marketplace</b></summary>
+<p align="center">
+  <img src="assets/screenshots/marketplace-browse.png" alt="Browse Marketplace" width="800">
+</p>
+</details>
+
+<details>
+<summary><b>Installed Modules</b></summary>
+<p align="center">
+  <img src="assets/screenshots/library-installed.png" alt="Installed Modules" width="800">
+</p>
+</details>
+
+<details>
+<summary><b>Updates Available</b></summary>
+<p align="center">
+  <img src="assets/screenshots/library-update.png" alt="Updates Available" width="800">
+</p>
+</details>
 
 ---
 
