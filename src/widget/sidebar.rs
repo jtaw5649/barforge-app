@@ -167,9 +167,7 @@ pub fn sidebar(
     let header = container(
         row![
             app_logo(ICON_LG),
-            text("Barforge")
-                .size(FONT_LG)
-                .color(theme.text_normal),
+            text("Barforge").size(FONT_LG).color(theme.text_normal),
         ]
         .spacing(SPACE_SM)
         .align_y(iced::Alignment::Center),

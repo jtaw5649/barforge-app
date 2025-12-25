@@ -1,9 +1,9 @@
 use std::hint::black_box;
 
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use barforge::app::state::{SortField, SortOrder};
 use barforge::testing::{RegistryModuleBuilder, test_app_with_registry};
 use barforge_registry_types::ModuleCategory;
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
 fn generate_modules(count: usize) -> Vec<barforge_registry_types::RegistryModule> {
     let categories = [

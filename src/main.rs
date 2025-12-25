@@ -1,7 +1,7 @@
+use barforge::cli::{Cli, Commands};
 use clap::Parser;
 use std::io::IsTerminal;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
-use barforge::cli::{Cli, Commands};
 
 fn setup_tracing() {
     let is_terminal = std::io::stderr().is_terminal();
