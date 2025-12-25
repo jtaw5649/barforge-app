@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>Browse, install, and manage waybar modules from a central registry.</b>
+  <b>Barforge App — Install and configure Waybar modules</b>
 </p>
 
 <p align="center">
@@ -173,6 +173,12 @@ cargo clippy
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Related
+
+| Project                                                  | Description                                  |
+| -------------------------------------------------------- | -------------------------------------------- |
+| [barforge-web](https://github.com/jtaw5649/barforge-web) | Barforge Hub — Browse and discover modules   |
 
 ## License
 
