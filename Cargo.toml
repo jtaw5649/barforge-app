@@ -68,7 +68,7 @@ which = "8.0"
 sigstore = { version = "0.13", optional = true }
 
 # System tray (D-Bus StatusNotifierItem)
-ksni = { version = "0.3.2", features = ["blocking"] }
+ksni = { version = "0.3.3", features = ["blocking"] }
 
 [features]
 default = []
