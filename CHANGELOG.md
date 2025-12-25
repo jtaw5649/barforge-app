@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1](https://github.com/jtaw5649/barforge-app/compare/barforge-app-v0.5.0...barforge-app-v0.5.1) (2025-12-25)
+
+
+### Fixed
+
+* **ci:** ignore cargo-dist managed actions in dependabot ([#42](https://github.com/jtaw5649/barforge-app/issues/42)) ([b6003ba](https://github.com/jtaw5649/barforge-app/commit/b6003ba5f31556e06957f902399fdf3ca420fd53))
+* **types:** add repository URL for cargo-dist ([#35](https://github.com/jtaw5649/barforge-app/issues/35)) ([1c09057](https://github.com/jtaw5649/barforge-app/commit/1c09057b60be7324224530cd812e185a5009689f))
+
+
+### Other
+
+* **deps:** bump notify from 7.0.0 to 8.2.0 ([#41](https://github.com/jtaw5649/barforge-app/issues/41)) ([1aa3a4e](https://github.com/jtaw5649/barforge-app/commit/1aa3a4e9f63765fd6cc69516ed9299a6935c9140))
+* **deps:** bump the minor-and-patch group with 5 updates ([#40](https://github.com/jtaw5649/barforge-app/issues/40)) ([b061ca4](https://github.com/jtaw5649/barforge-app/commit/b061ca467a21e5d7b691b252a9dc06489f5509ce))
+
 ## [0.5.0](https://github.com/jtaw5649/barforge-app/compare/barforge-app-v0.4.0...barforge-app-v0.5.0) (2025-12-25)
 
 
