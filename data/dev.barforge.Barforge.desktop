@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Barforge
+Comment=Browse, install, and manage Waybar modules
+Exec=barforge
+Icon=dev.barforge.Barforge
+Terminal=false
+Type=Application
+Categories=GTK;Utility;Settings;
+Keywords=barforge;waybar;modules;bar;customization;linux;
+StartupNotify=true

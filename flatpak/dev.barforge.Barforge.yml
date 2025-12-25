@@ -1,0 +1,43 @@
+app-id: dev.barforge.Barforge
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: barforge
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=home
+
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  env:
+    CARGO_HOME: /run/build/barforge/cargo
+    RUST_BACKTRACE: '1'
+
+modules:
+  - name: barforge
+    buildsystem: simple
+    build-commands:
+      - cargo --offline fetch --manifest-path Cargo.toml --verbose
+      - cargo --offline build --release --verbose
+      - install -Dm755 target/release/barforge -t /app/bin/
+      - install -Dm644 data/dev.barforge.Barforge.desktop -t /app/share/applications/
+      - install -Dm644 data/dev.barforge.Barforge.metainfo.xml -t /app/share/metainfo/
+      - install -Dm644 data/icons/hicolor/scalable/apps/dev.barforge.Barforge.svg -t /app/share/icons/hicolor/scalable/apps/
+      - install -Dm644 data/icons/hicolor/16x16/apps/dev.barforge.Barforge.png -t /app/share/icons/hicolor/16x16/apps/
+      - install -Dm644 data/icons/hicolor/32x32/apps/dev.barforge.Barforge.png -t /app/share/icons/hicolor/32x32/apps/
+      - install -Dm644 data/icons/hicolor/48x48/apps/dev.barforge.Barforge.png -t /app/share/icons/hicolor/48x48/apps/
+      - install -Dm644 data/icons/hicolor/64x64/apps/dev.barforge.Barforge.png -t /app/share/icons/hicolor/64x64/apps/
+      - install -Dm644 data/icons/hicolor/128x128/apps/dev.barforge.Barforge.png -t /app/share/icons/hicolor/128x128/apps/
+      - install -Dm644 data/icons/hicolor/256x256/apps/dev.barforge.Barforge.png -t /app/share/icons/hicolor/256x256/apps/
+      - install -Dm644 data/icons/hicolor/512x512/apps/dev.barforge.Barforge.png -t /app/share/icons/hicolor/512x512/apps/
+    sources:
+      - type: dir
+        path: ..
+      - cargo-sources.json

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>org.waybar.Manager</id>
+  <id>dev.barforge.Barforge</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
-  <name>Waybar Manager</name>
-  <summary>Browse, install, and manage waybar modules</summary>
+  <name>Barforge</name>
+  <summary>Browse, install, and manage Waybar modules</summary>
   <description>
     <p>
-      Waybar Manager is a graphical application for discovering, installing,
+      Barforge is a graphical application for discovering, installing,
       and managing custom modules for Waybar, the highly customizable status bar
       for Wayland compositors.
     </p>
@@ -20,15 +20,15 @@
       <li>Dark theme optimized for desktop integration</li>
     </ul>
   </description>
-  <launchable type="desktop-id">org.waybar.Manager.desktop</launchable>
-  <url type="homepage">https://github.com/jtaw5649/waybar-manager</url>
-  <url type="bugtracker">https://github.com/jtaw5649/waybar-manager/issues</url>
-  <url type="vcs-browser">https://github.com/jtaw5649/waybar-manager</url>
+  <launchable type="desktop-id">dev.barforge.Barforge.desktop</launchable>
+  <url type="homepage">https://github.com/jtaw5649/barforge-app</url>
+  <url type="bugtracker">https://github.com/jtaw5649/barforge-app/issues</url>
+  <url type="vcs-browser">https://github.com/jtaw5649/barforge-app</url>
   <developer id="io.github.jtaw5649">
     <name>jtaw</name>
   </developer>
   <provides>
-    <binary>waybar-manager-bin</binary>
+    <binary>barforge</binary>
   </provides>
   <requires>
     <display_length compare="ge">768</display_length>
@@ -42,6 +42,7 @@
     <category>Settings</category>
   </categories>
   <keywords>
+    <keyword>barforge</keyword>
     <keyword>waybar</keyword>
     <keyword>modules</keyword>
     <keyword>status bar</keyword>
@@ -51,7 +52,7 @@
   <screenshots>
     <screenshot type="default">
       <caption>Main browse view showing available modules</caption>
-      <image>https://raw.githubusercontent.com/jtaw5649/waybar-manager/master/screenshots/browse.png</image>
+      <image>https://raw.githubusercontent.com/jtaw5649/barforge-app/master/screenshots/browse.png</image>
     </screenshot>
   </screenshots>
   <content_rating type="oars-1.1" />
