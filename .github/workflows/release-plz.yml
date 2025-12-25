@@ -12,7 +12,7 @@ jobs:
   release-plz-release:
     name: Release-plz release
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'jtaw5649'
+    if: github.repository_owner == 'jtaw5649' && github.actor != 'github-actions[bot]'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,7 +29,7 @@ jobs:
   release-plz-pr:
     name: Release-plz PR
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'jtaw5649'
+    if: github.repository_owner == 'jtaw5649' && github.actor != 'github-actions[bot]'
     concurrency:
       group: release-plz-${{ github.ref }}
       cancel-in-progress: false
