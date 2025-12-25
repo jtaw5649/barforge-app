@@ -1,0 +1,14 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="640" fill="#1e1e2e" />
+  <defs>
+    <linearGradient id="barforgeOgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cba6f7" />
+      <stop offset="100%" stop-color="#89b4fa" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(460 140) scale(3.6)">
+    <path d="M10 20 L90 20 L78 38 L22 38 Z" fill="url(#barforgeOgGrad)" />
+    <path d="M30 43 L70 43 L70 60 L30 60 Z" fill="url(#barforgeOgGrad)" fill-opacity="0.9" />
+    <path d="M22 65 L78 65 L90 85 L10 85 Z" fill="url(#barforgeOgGrad)" fill-opacity="0.8" />
+  </g>
+</svg>
