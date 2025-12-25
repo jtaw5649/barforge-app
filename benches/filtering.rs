@@ -1,11 +1,11 @@
 use std::hint::black_box;
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use waybar_manager::app::state::{SortField, SortOrder};
-use waybar_manager::testing::{RegistryModuleBuilder, test_app_with_registry};
-use waybar_registry_types::ModuleCategory;
+use barforge::app::state::{SortField, SortOrder};
+use barforge::testing::{RegistryModuleBuilder, test_app_with_registry};
+use barforge_registry_types::ModuleCategory;
 
-fn generate_modules(count: usize) -> Vec<waybar_registry_types::RegistryModule> {
+fn generate_modules(count: usize) -> Vec<barforge_registry_types::RegistryModule> {
     let categories = [
         ModuleCategory::System,
         ModuleCategory::Network,
@@ -65,7 +65,7 @@ fn bench_filtered_modules_with_category(c: &mut Criterion) {
         let modules = generate_modules(size);
         let mut app = test_app_with_registry(modules);
         app.browse.selected_category =
-            waybar_manager::app::state::CategoryFilter(Some(ModuleCategory::System));
+            barforge::app::state::CategoryFilter(Some(ModuleCategory::System));
 
         group.bench_with_input(BenchmarkId::new("category_filter", size), &app, |b, app| {
             b.iter(|| black_box(app.filtered_modules()))

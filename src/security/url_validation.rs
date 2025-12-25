@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn github_accepts_valid_https() {
-        let result = validate_github_url("https://github.com/waybar-modules/weather");
+        let result = validate_github_url("https://github.com/barforge-modules/weather");
         assert!(result.is_ok());
     }
 
@@ -168,10 +168,10 @@ mod tests {
 
     #[test]
     fn parse_github_extracts_owner_repo() {
-        let result = parse_github_url_safe("https://github.com/waybar-modules/weather");
+        let result = parse_github_url_safe("https://github.com/barforge-modules/weather");
         assert_eq!(
             result,
-            Ok(("waybar-modules".to_string(), "weather".to_string()))
+            Ok(("barforge-modules".to_string(), "weather".to_string()))
         );
     }
 

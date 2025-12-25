@@ -2,8 +2,8 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "waybar-manager")]
-#[command(about = "Extension manager for Waybar")]
+#[command(name = "barforge")]
+#[command(about = "Barforge module manager for Waybar")]
 #[command(version)]
 pub struct Cli {
     #[command(subcommand)]
@@ -26,8 +26,8 @@ pub enum Commands {
 
 impl Cli {
     pub fn run_sandbox_exec(script: PathBuf, module_dir: PathBuf) -> ! {
-        let config_json = std::env::var("WAYBAR_SANDBOX_CONFIG")
-            .expect("Missing WAYBAR_SANDBOX_CONFIG environment variable");
+        let config_json = std::env::var("BARFORGE_SANDBOX_CONFIG")
+            .expect("Missing BARFORGE_SANDBOX_CONFIG environment variable");
 
         let config: crate::security::sandbox::SandboxConfig =
             serde_json::from_str(&config_json).expect("Invalid sandbox configuration JSON");
@@ -63,20 +63,20 @@ mod tests {
 
     #[test]
     fn cli_parses_no_args_as_none() {
-        let cli = Cli::parse_from(["waybar-manager"]);
+        let cli = Cli::parse_from(["barforge"]);
         assert!(cli.command.is_none());
     }
 
     #[test]
     fn cli_parses_gui_command() {
-        let cli = Cli::parse_from(["waybar-manager", "gui"]);
+        let cli = Cli::parse_from(["barforge", "gui"]);
         assert!(matches!(cli.command, Some(Commands::Gui)));
     }
 
     #[test]
     fn cli_parses_internal_sandbox_exec() {
         let cli = Cli::parse_from([
-            "waybar-manager",
+            "barforge",
             "internal-sandbox-exec",
             "--script",
             "/path/to/script.sh",

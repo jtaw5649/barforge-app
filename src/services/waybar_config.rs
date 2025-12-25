@@ -164,7 +164,7 @@ pub fn merge_module_config(
 
 pub fn inject_module_css(existing_css: &str, uuid: &str, module_css: &str) -> String {
     format!(
-        "{}\n/* BEGIN waybar-manager:{} */\n{}\n/* END waybar-manager:{} */",
+        "{}\n/* BEGIN barforge:{} */\n{}\n/* END barforge:{} */",
         existing_css.trim_end(),
         uuid,
         module_css.trim(),
@@ -173,8 +173,8 @@ pub fn inject_module_css(existing_css: &str, uuid: &str, module_css: &str) -> St
 }
 
 pub fn remove_module_css(css_content: &str, uuid: &str) -> String {
-    let begin_marker = format!("/* BEGIN waybar-manager:{} */", uuid);
-    let end_marker = format!("/* END waybar-manager:{} */", uuid);
+    let begin_marker = format!("/* BEGIN barforge:{} */", uuid);
+    let end_marker = format!("/* END barforge:{} */", uuid);
 
     let Some(begin_pos) = css_content.find(&begin_marker) else {
         return css_content.to_string();
@@ -339,14 +339,14 @@ mod tests {
         let result = merge_module_config(
             waybar,
             module,
-            "/home/user/.local/share/waybar-manager/modules/test@ns",
+            "/home/user/.local/share/barforge/modules/test@ns",
         )
         .unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
 
         assert_eq!(
             parsed["custom/script"]["exec"],
-            "/home/user/.local/share/waybar-manager/modules/test@ns/script.sh"
+            "/home/user/.local/share/barforge/modules/test@ns/script.sh"
         );
     }
 
@@ -369,23 +369,23 @@ mod tests {
 
         let result = inject_module_css(existing, "weather@test", module_css);
 
-        assert!(result.contains("/* BEGIN waybar-manager:weather@test */"));
+        assert!(result.contains("/* BEGIN barforge:weather@test */"));
         assert!(result.contains(".custom-weather { color: #fff; }"));
-        assert!(result.contains("/* END waybar-manager:weather@test */"));
+        assert!(result.contains("/* END barforge:weather@test */"));
         assert!(result.starts_with("* { font-family: monospace; }"));
     }
 
     #[test]
     fn test_remove_module_css_strips_marked_section() {
         let css = r#"* { font-family: monospace; }
-/* BEGIN waybar-manager:weather@test */
+/* BEGIN barforge:weather@test */
 .custom-weather { color: #fff; }
-/* END waybar-manager:weather@test */
+/* END barforge:weather@test */
 .clock { color: blue; }"#;
 
         let result = remove_module_css(css, "weather@test");
 
-        assert!(!result.contains("waybar-manager:weather@test"));
+        assert!(!result.contains("barforge:weather@test"));
         assert!(!result.contains(".custom-weather"));
         assert!(result.contains("* { font-family: monospace; }"));
         assert!(result.contains(".clock { color: blue; }"));

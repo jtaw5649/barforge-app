@@ -9,7 +9,7 @@ use crate::theme::{
     container as cont_style,
 };
 
-const GITHUB_URL: &str = "https://github.com/jtaw5649/waybar-manager";
+const GITHUB_URL: &str = "https://github.com/jtaw5649/barforge-app";
 
 pub fn settings_screen(theme: &AppTheme, tray_enabled: bool) -> Element<'_, Message> {
     let header = text("Settings").size(FONT_2XL).color(theme.text_normal);

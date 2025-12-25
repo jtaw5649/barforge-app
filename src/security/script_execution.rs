@@ -55,7 +55,7 @@ pub fn run_script_sandboxed(
         .arg(script)
         .arg("--module-dir")
         .arg(module_dir)
-        .env("WAYBAR_SANDBOX_CONFIG", config_json)
+        .env("BARFORGE_SANDBOX_CONFIG", config_json)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()

@@ -1,5 +1,5 @@
 use crate::helpers::{TestContext, mock_registry_failure, mock_registry_success};
-use waybar_registry_types::{ModuleCategory, RegistryIndex};
+use barforge_registry_types::{ModuleCategory, RegistryIndex};
 
 #[tokio::test]
 async fn test_mock_server_serves_registry() {

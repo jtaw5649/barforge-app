@@ -6,7 +6,7 @@ use ksni::blocking::TrayMethods;
 use ksni::menu::StandardItem;
 use ksni::{MenuItem, Tray};
 
-type TrayHandle = ksni::blocking::Handle<WaybarTray>;
+type TrayHandle = ksni::blocking::Handle<BarforgeTray>;
 
 static TRAY_HANDLE: OnceLock<Arc<Mutex<Option<TrayHandle>>>> = OnceLock::new();
 
@@ -17,12 +17,12 @@ pub enum TrayEvent {
     Quit,
 }
 
-pub struct WaybarTray {
+pub struct BarforgeTray {
     event_sender: Sender<TrayEvent>,
     update_count: usize,
 }
 
-impl Tray for WaybarTray {
+impl Tray for BarforgeTray {
     const MENU_ON_ACTIVATE: bool = true;
 
     fn id(&self) -> String {
@@ -35,15 +35,15 @@ impl Tray for WaybarTray {
 
     fn title(&self) -> String {
         if self.update_count > 0 {
-            format!("Waybar Manager ({} updates)", self.update_count)
+            format!("Barforge ({} updates)", self.update_count)
         } else {
-            "Waybar Manager".into()
+            "Barforge".into()
         }
     }
 
     fn menu(&self) -> Vec<MenuItem<Self>> {
         let show_item = StandardItem {
-            label: "Show Waybar Manager".into(),
+            label: "Show Barforge".into(),
             activate: Box::new(|tray: &mut Self| {
                 let _ = tray.event_sender.send(TrayEvent::ShowWindow);
             }),
@@ -84,7 +84,7 @@ impl Tray for WaybarTray {
 pub fn init() -> Option<Receiver<TrayEvent>> {
     let (event_tx, event_rx) = mpsc::channel();
 
-    let tray = WaybarTray {
+    let tray = BarforgeTray {
         event_sender: event_tx,
         update_count: 0,
     };

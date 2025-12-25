@@ -1,15 +1,15 @@
 use clap::Parser;
 use std::io::IsTerminal;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
-use waybar_manager::cli::{Cli, Commands};
+use barforge::cli::{Cli, Commands};
 
 fn setup_tracing() {
     let is_terminal = std::io::stderr().is_terminal();
 
     let default_filter = if is_terminal {
-        "waybar_manager=debug"
+        "barforge=debug"
     } else {
-        "waybar_manager=info"
+        "barforge=info"
     };
 
     let env_filter =
@@ -66,19 +66,19 @@ fn run_gui() -> iced::Result {
     setup_panic_handler();
 
     tracing::info!(
-        "Waybar Manager v{} starting (PID {})",
+        "Barforge v{} starting (PID {})",
         env!("CARGO_PKG_VERSION"),
         std::process::id()
     );
 
     iced::application(
-        waybar_manager::app::App::new,
-        waybar_manager::app::App::update,
-        waybar_manager::app::App::view,
+        barforge::app::App::new,
+        barforge::app::App::update,
+        barforge::app::App::view,
     )
-    .title("Waybar Manager")
-    .theme(waybar_manager::app::App::theme)
-    .subscription(waybar_manager::app::App::subscription)
+    .title("Barforge")
+    .theme(barforge::app::App::theme)
+    .subscription(barforge::app::App::subscription)
     .window_size((1200.0, 800.0))
     .run()
 }

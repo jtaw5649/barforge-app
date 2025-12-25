@@ -3,24 +3,34 @@ use std::time::Duration;
 
 use once_cell::sync::Lazy;
 use reqwest::Client;
+use url::Url;
 
-pub const API_BASE_URL: &str = "https://api.waybarmodules.dev";
-pub const REGISTRY_URL: &str = "https://api.waybarmodules.dev/api/v1/index";
-pub const SECURITY_CHECK_URL: &str = "https://api.waybarmodules.dev/security/check";
-pub const PACKAGES_BASE_URL: &str = "https://api.waybarmodules.dev/packages";
+pub const API_BASE_URL: &str = "https://api.barforge.dev";
+pub const REGISTRY_URL: &str = "https://api.barforge.dev/api/v1/index";
+pub const SECURITY_CHECK_URL: &str = "https://api.barforge.dev/security/check";
+pub const PACKAGES_BASE_URL: &str = "https://api.barforge.dev/packages";
 
 #[must_use]
 pub fn package_url(uuid: &str, version: &str) -> String {
-    let encoded_uuid = urlencoding::encode(uuid);
-    let encoded_version = urlencoding::encode(version);
-    format!("{PACKAGES_BASE_URL}/{encoded_uuid}/{encoded_version}/package.tar.gz")
+    packages_url(uuid, version, "package.tar.gz")
 }
 
 #[must_use]
 pub fn signature_url(uuid: &str, version: &str) -> String {
-    let encoded_uuid = urlencoding::encode(uuid);
-    let encoded_version = urlencoding::encode(version);
-    format!("{PACKAGES_BASE_URL}/{encoded_uuid}/{encoded_version}/package.tar.gz.minisig")
+    packages_url(uuid, version, "package.tar.gz.minisig")
+}
+
+fn packages_url(uuid: &str, version: &str, filename: &str) -> String {
+    let mut url = Url::parse(PACKAGES_BASE_URL).expect("valid packages base url");
+    {
+        let mut segments = url
+            .path_segments_mut()
+            .expect("packages base url must be a base");
+        segments.push(uuid);
+        segments.push(version);
+        segments.push(filename);
+    }
+    url.to_string()
 }
 
 pub static HTTP_CLIENT: Lazy<Client> = Lazy::new(|| {
@@ -41,13 +51,13 @@ static HOME_DIR: Lazy<PathBuf> =
 static DATA_DIR: Lazy<PathBuf> = Lazy::new(|| {
     dirs::data_dir()
         .unwrap_or_else(|| HOME_DIR.join(".local/share"))
-        .join("waybar-manager")
+        .join("barforge")
 });
 
 static CONFIG_DIR: Lazy<PathBuf> = Lazy::new(|| {
     dirs::config_dir()
         .unwrap_or_else(|| HOME_DIR.join(".config"))
-        .join("waybar-manager")
+        .join("barforge")
 });
 
 static WAYBAR_CONFIG_DIR: Lazy<PathBuf> = Lazy::new(|| {
@@ -71,7 +81,7 @@ pub fn modules_dir() -> PathBuf {
 pub fn cache_dir() -> PathBuf {
     dirs::cache_dir()
         .unwrap_or_else(|| HOME_DIR.join(".cache"))
-        .join("waybar-manager")
+        .join("barforge")
 }
 
 pub fn registry_cache_path() -> PathBuf {
@@ -119,13 +129,13 @@ mod tests {
     #[test]
     fn test_data_dir_exists() {
         let path = data_dir();
-        assert!(path.to_string_lossy().contains("waybar-manager"));
+        assert!(path.to_string_lossy().contains("barforge"));
     }
 
     #[test]
     fn test_config_dir_exists() {
         let path = config_dir();
-        assert!(path.to_string_lossy().contains("waybar-manager"));
+        assert!(path.to_string_lossy().contains("barforge"));
     }
 
     #[test]
@@ -138,7 +148,7 @@ mod tests {
     #[test]
     fn test_cache_dir_contains_app_name() {
         let path = cache_dir();
-        assert!(path.to_string_lossy().contains("waybar-manager"));
+        assert!(path.to_string_lossy().contains("barforge"));
     }
 
     #[test]
@@ -207,18 +217,22 @@ mod tests {
 
     #[test]
     fn test_package_url_encoding() {
-        let url = package_url("weather@test", "1.0.0");
-        assert!(url.contains("weather%40test"));
-        assert!(url.contains("1.0.0"));
+        let url = package_url("weather@test", "1.0.0+build.1");
+        assert!(url.contains("weather@test"));
+        assert!(url.contains("1.0.0+build.1"));
         assert!(url.ends_with("package.tar.gz"));
+        assert!(!url.contains("%40"));
+        assert!(!url.contains("%2"));
     }
 
     #[test]
     fn test_signature_url_encoding() {
-        let url = signature_url("weather@test", "1.0.0");
-        assert!(url.contains("weather%40test"));
-        assert!(url.contains("1.0.0"));
+        let url = signature_url("weather@test", "1.0.0+build.1");
+        assert!(url.contains("weather@test"));
+        assert!(url.contains("1.0.0+build.1"));
         assert!(url.ends_with("package.tar.gz.minisig"));
+        assert!(!url.contains("%40"));
+        assert!(!url.contains("%2"));
     }
 
     #[test]
@@ -228,9 +242,9 @@ mod tests {
 
     #[test]
     fn api_urls_use_custom_domain() {
-        assert!(API_BASE_URL.contains("api.waybarmodules.dev"));
-        assert!(REGISTRY_URL.contains("api.waybarmodules.dev"));
-        assert!(SECURITY_CHECK_URL.contains("api.waybarmodules.dev"));
-        assert!(PACKAGES_BASE_URL.contains("api.waybarmodules.dev"));
+        assert!(API_BASE_URL.contains("api.barforge.dev"));
+        assert!(REGISTRY_URL.contains("api.barforge.dev"));
+        assert!(SECURITY_CHECK_URL.contains("api.barforge.dev"));
+        assert!(PACKAGES_BASE_URL.contains("api.barforge.dev"));
     }
 }

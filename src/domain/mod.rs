@@ -3,7 +3,7 @@ mod installed;
 
 pub use bar_section::{BarSection, ModulePosition};
 pub use installed::InstalledModule;
-pub use waybar_registry_types::{
+pub use barforge_registry_types::{
     Author, AuthorProfile, CategoryInfo, ModuleCategory, ModuleUuid, ModuleUuidError,
     ModuleVersion, RegistryIndex, RegistryModule, Review, ReviewUser, ReviewsResponse,
 };

@@ -9,7 +9,7 @@ use crate::theme::ThemeMode;
 fn settings_path() -> PathBuf {
     let config_dir = dirs::config_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join("waybar-manager");
+        .join("barforge");
     config_dir.join("settings.json")
 }
 

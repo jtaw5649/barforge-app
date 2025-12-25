@@ -2,7 +2,7 @@ use std::collections::{HashSet, VecDeque};
 use std::path::PathBuf;
 use std::time::Instant;
 
-use waybar_registry_types::{
+use barforge_registry_types::{
     ModuleCategory, ModuleUuid, ModuleVersion, RegistryIndex, RegistryModule,
 };
 

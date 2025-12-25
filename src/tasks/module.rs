@@ -338,7 +338,7 @@ async fn download_module_files(repo_url: &str, install_path: &Path) -> Result<()
     let response = HTTP_CLIENT
         .get(&tarball_url)
         .header("Accept", "application/vnd.github+json")
-        .header("User-Agent", "waybar-manager")
+        .header("User-Agent", "barforge")
         .send()
         .await
         .map_err(|e| format!("Failed to download module: {e}"))?;
@@ -351,7 +351,7 @@ async fn download_module_files(repo_url: &str, install_path: &Path) -> Result<()
         let response = HTTP_CLIENT
             .get(&fallback_url)
             .header("Accept", "application/vnd.github+json")
-            .header("User-Agent", "waybar-manager")
+            .header("User-Agent", "barforge")
             .send()
             .await
             .map_err(|e| format!("Failed to download module: {e}"))?;

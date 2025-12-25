@@ -1,5 +1,5 @@
-use waybar_manager::app::state::{LoadingState, Screen};
-use waybar_manager::testing::{
+use barforge::app::state::{LoadingState, Screen};
+use barforge::testing::{
     InstalledModuleBuilder, RegistryModuleBuilder, test_app, test_app_with_installed,
     test_app_with_registry,
 };
@@ -137,7 +137,7 @@ fn test_screen_label() {
 
 #[test]
 fn test_registry_load_error_sets_failed_state() {
-    use waybar_manager::app::handlers::handle_registry_loaded;
+    use barforge::app::handlers::handle_registry_loaded;
 
     let mut app = test_app();
     let error_message = "Network error: connection refused".to_string();
