@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "rust",
+  "packages": {
+    ".": {
+      "changelog-path": "CHANGELOG.md",
+      "package-name": "barforge-app"
+    },
+    "crates/barforge-registry-types": {
+      "changelog-path": "crates/barforge-registry-types/CHANGELOG.md",
+      "package-name": "barforge-registry-types",
+      "include-component-in-tag": true
+    }
+  },
+  "changelog-sections": [
+    { "type": "feat", "section": "Added" },
+    { "type": "fix", "section": "Fixed" },
+    { "type": "perf", "section": "Other" },
+    { "type": "refactor", "section": "Other" },
+    { "type": "docs", "section": "Other" },
+    { "type": "chore", "section": "Other" },
+    { "type": "build", "section": "Other" },
+    { "type": "ci", "section": "Other" },
+    { "type": "test", "section": "Other" },
+    { "type": "style", "section": "Other" },
+    { "type": "revert", "section": "Other" }
+  ]
+}
