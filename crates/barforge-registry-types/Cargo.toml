@@ -5,6 +5,7 @@ edition = "2024"
 description = "Shared types for Barforge app and registry API"
 license = "GPL-3.0-or-later"
 authors = ["jtaw"]
+repository = "https://github.com/jtaw5649/barforge-app"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
