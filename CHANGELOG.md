@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/jtaw5649/barforge-app/compare/barforge-app-v0.5.1...barforge-app-v0.6.0) (2025-12-25)
+
+
+### Added
+
+* update OG image and README branding ([#50](https://github.com/jtaw5649/barforge-app/issues/50)) ([e56e411](https://github.com/jtaw5649/barforge-app/commit/e56e411d5a11094bbfd76be866ae7285c4b31390))
+
+
+### Fixed
+
+* **ci:** add cargo-workspace plugin for version sync ([#48](https://github.com/jtaw5649/barforge-app/issues/48)) ([8bb2ddc](https://github.com/jtaw5649/barforge-app/commit/8bb2ddc22e9ab11f28a41cb338c23014390ea1d7))
+* **ci:** skip github release in release-please ([#44](https://github.com/jtaw5649/barforge-app/issues/44)) ([d728a98](https://github.com/jtaw5649/barforge-app/commit/d728a986fd83878ccf33f0d3347087d9ed44d36f))
+* **ci:** use separate release PRs per package ([#46](https://github.com/jtaw5649/barforge-app/issues/46)) ([aed77cc](https://github.com/jtaw5649/barforge-app/commit/aed77cc8627918a76e5f7387498a6138f3933e76))
+
 ## [0.5.1](https://github.com/jtaw5649/barforge-app/compare/barforge-app-v0.5.0...barforge-app-v0.5.1) (2025-12-25)
 
 
