@@ -9,7 +9,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in Waybar Manager, please report it responsibly:
+If you discover a security vulnerability in Barforge, please report it responsibly:
 
 1. **Do not** open a public issue
 2. Email the maintainer directly or use GitHub's private vulnerability reporting
@@ -53,6 +53,6 @@ Modules from the registry are cryptographically signed:
 
 ## Local Data
 
-- Configuration files: `~/.config/waybar/`
-- Module data: `~/.local/share/waybar-manager/`
-- Cache: `~/.cache/waybar-manager/`
+- Configuration files: `~/.config/barforge/`
+- Module data: `~/.local/share/barforge/`
+- Cache: `~/.cache/barforge/`

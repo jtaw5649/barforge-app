@@ -1,6 +1,6 @@
-# Contributing to Waybar Manager
+# Contributing to Barforge
 
-Thank you for your interest in contributing to Waybar Manager!
+Thank you for your interest in contributing to Barforge!
 
 ## Development Setup
 
@@ -18,7 +18,7 @@ cargo run
 
 ### Testing
 ```bash
-cargo test
+./scripts/test.sh
 cargo clippy
 cargo fmt --check
 ```
@@ -28,7 +28,7 @@ cargo fmt --check
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-feature`)
 3. Make your changes
-4. Ensure tests pass (`cargo test`)
+4. Ensure tests pass (`./scripts/test.sh`)
 5. Ensure clippy passes (`cargo clippy -- -D warnings`)
 6. Ensure formatting is correct (`cargo fmt`)
 7. Commit your changes with a descriptive message
@@ -54,5 +54,5 @@ When reporting bugs, please include:
 
 ## Adding Modules to the Registry
 
-To submit a new waybar module to the registry, please open an issue or PR at:
-https://github.com/jtaw5649/waybar-modules-registry
+To submit a new module to the registry, please open an issue or PR at:
+https://github.com/jtaw5649/barforge-registry-data

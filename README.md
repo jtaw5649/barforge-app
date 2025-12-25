@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/og.png" alt="Waybar Manager" width="800">
+  <img src="assets/og.png" alt="Barforge" width="800">
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/Rust-1.85%2B-orange?style=flat-square&logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/iced-0.14-blue?style=flat-square" alt="iced">
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License">
-  <img src="https://img.shields.io/github/v/release/jtaw5649/waybar-manager?style=flat-square" alt="Release">
+  <img src="https://img.shields.io/github/v/release/jtaw5649/barforge-app?style=flat-square" alt="Release">
 </p>
 
 ---
@@ -67,29 +67,29 @@
 ### Pre-built Binary (Recommended)
 
 ```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/jtaw5649/waybar-manager/releases/latest/download/waybar-manager-bin-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/jtaw5649/barforge-app/releases/latest/download/barforge-bin-installer.sh | sh
 ```
 
 ### Arch Linux (AUR)
 
 ```bash
-yay -S waybar-manager
+yay -S barforge
 ```
 
 ### Flatpak (Local Build)
 
 ```bash
-flatpak-builder --user --install --force-clean build flatpak/org.waybar.Manager.yml
-flatpak run org.waybar.Manager
+flatpak-builder --user --install --force-clean build flatpak/dev.barforge.Barforge.yml
+flatpak run dev.barforge.Barforge
 ```
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/jtaw5649/waybar-manager.git
-cd waybar-manager
+git clone https://github.com/jtaw5649/barforge-app.git
+cd barforge-app
 cargo build --release
-./target/release/waybar-manager-bin
+./target/release/barforge
 ```
 
 ### Dependencies (Build from Source)
@@ -110,7 +110,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 Modules follow a format inspired by GNOME Extensions:
 
 ```
-weather-wttr@waybar-modules/
+weather-wttr@barforge/
 ├── metadata.json    # UUID, name, description, waybar-version
 ├── config.jsonc     # Default waybar config snippet
 ├── prefs.json       # Optional: settings schema (auto-generates UI)
@@ -122,7 +122,7 @@ weather-wttr@waybar-modules/
 
 ```json
 {
-  "uuid": "weather-wttr@waybar-modules",
+  "uuid": "weather-wttr@barforge",
   "name": "Weather (wttr.in)",
   "description": "Display weather using wttr.in API",
   "version-name": "1.2.0",
@@ -135,7 +135,7 @@ weather-wttr@waybar-modules/
 ## Submitting a Module
 
 1. Create your module repo with required files (see Module Format above)
-2. Submit a PR to [waybar-modules-registry](https://github.com/jtaw5649/waybar-modules-registry)
+2. Submit a PR to [barforge-registry-data](https://github.com/jtaw5649/barforge-registry-data)
 
 ## Development
 
@@ -159,7 +159,7 @@ cargo clippy
 ```
 .
 ├── crates/
-│   └── waybar-registry-types/   # Shared types (ModuleUuid, RegistryModule, etc.)
+│   └── barforge-registry-types/   # Shared types (ModuleUuid, RegistryModule, etc.)
 └── src/
     ├── main.rs              # Application entry point
     ├── app/                 # Elm architecture (state, message, update, view)
