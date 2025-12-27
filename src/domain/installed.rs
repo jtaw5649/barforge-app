@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use barforge_registry_types::{ModuleUuid, ModuleVersion};
+use super::{ModuleUuid, ModuleVersion};
 use serde::{Deserialize, Serialize};
 
 use super::ModulePosition;

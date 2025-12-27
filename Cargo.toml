@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/barforge-registry-types"]
+members = ["crates/barforge-registry-client"]
 resolver = "2"
 
 [package]
@@ -18,7 +18,7 @@ name = "barforge"
 path = "src/main.rs"
 
 [dependencies]
-barforge-registry-types = { path = "crates/barforge-registry-types" }
+barforge_registry_client = { path = "crates/barforge-registry-client" }
 
 # UI Framework
 iced = { version = "0.14", features = ["tokio", "svg", "image", "advanced", "markdown"] }

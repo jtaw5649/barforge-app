@@ -7,10 +7,6 @@ pr_labels = ["release", "skip-ci"]
 pr_name = "chore: release v{{ version }}"
 features_always_increment_minor = false
 
-[[package]]
-name = "barforge-registry-types"
-publish = true
-
 [changelog]
 header = "# Changelog\n\nAll notable changes to this project will be documented in this file."
 body = """
