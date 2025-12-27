@@ -56,10 +56,7 @@ pub fn map_registry_module(api: api_models::RegistryModule) -> Result<RegistryMo
     } = api;
     let uuid = parse_module_uuid(&uuid)?;
     let version = version.flatten();
-    let version = version
-        .as_deref()
-        .map(parse_module_version)
-        .transpose()?;
+    let version = version.as_deref().map(parse_module_version).transpose()?;
     let last_updated = parse_optional_timestamp(last_updated.flatten())?;
     let downloads = parse_u64(downloads, "downloads")?;
     let category = map_module_category(category);
