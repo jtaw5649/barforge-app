@@ -159,13 +159,13 @@ cargo clippy
 ```
 .
 ├── crates/
-│   └── barforge-registry-types/   # Shared types (ModuleUuid, RegistryModule, etc.)
+│   └── barforge-registry-client/  # Generated Rust client from OpenAPI
 └── src/
     ├── main.rs              # Application entry point
     ├── app/                 # Elm architecture (state, message, update, view)
     ├── domain/              # InstalledModule, BarSection (app-specific types)
     ├── services/            # Registry fetch, module management
-    ├── tasks.rs             # Async Task operations
+    ├── tasks/               # Async Task operations
     ├── theme/               # Custom theming (colors, styles)
     └── widget/              # Reusable UI components (sidebar, cards, rows)
 ```

@@ -1,5 +1,5 @@
 use crate::helpers::{TestContext, mock_registry_failure, mock_registry_success};
-use barforge_registry_types::{ModuleCategory, RegistryIndex};
+use barforge::domain::{ModuleCategory, RegistryIndex};
 
 #[tokio::test]
 async fn test_mock_server_serves_registry() {
@@ -66,7 +66,11 @@ async fn test_registry_search_finds_by_name() {
         .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
-    let results = registry.search("CPU");
+    let results: Vec<_> = registry
+        .modules
+        .iter()
+        .filter(|module| module.matches_search("CPU"))
+        .collect();
 
     assert_eq!(results.len(), 1);
     assert_eq!(results[0].name, "CPU Monitor");
@@ -82,7 +86,11 @@ async fn test_registry_search_finds_by_tag() {
         .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
-    let results = registry.search("ram");
+    let results: Vec<_> = registry
+        .modules
+        .iter()
+        .filter(|module| module.matches_search("ram"))
+        .collect();
 
     assert_eq!(results.len(), 1);
     assert_eq!(results[0].name, "Memory Monitor");
@@ -98,7 +106,11 @@ async fn test_registry_by_category_filters_correctly() {
         .expect("request failed");
     let registry: RegistryIndex = response.json().await.expect("failed to parse json");
 
-    let system_modules = registry.by_category(ModuleCategory::System);
+    let system_modules: Vec<_> = registry
+        .modules
+        .iter()
+        .filter(|module| module.category == ModuleCategory::System)
+        .collect();
 
     assert_eq!(system_modules.len(), 2);
 }

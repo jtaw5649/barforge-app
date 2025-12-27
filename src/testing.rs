@@ -2,9 +2,7 @@ use std::collections::{HashSet, VecDeque};
 use std::path::PathBuf;
 use std::time::Instant;
 
-use barforge_registry_types::{
-    ModuleCategory, ModuleUuid, ModuleVersion, RegistryIndex, RegistryModule,
-};
+use crate::domain::{ModuleCategory, ModuleUuid, ModuleVersion, RegistryIndex, RegistryModule};
 
 use crate::app::state::{
     App, AuthorProfileState, BrowseState, CategoryFilter, ConfirmationState, InstalledState,
@@ -153,6 +151,7 @@ impl RegistryModuleBuilder {
             verified_author: false,
             tags: self.tags,
             checksum: None,
+            license: None,
         }
     }
 }
