@@ -4,7 +4,7 @@ git_release_enable = true
 git_tag_enable = true
 publish = false
 pr_labels = ["release", "skip-ci"]
-pr_name = "chore: release v{{ version }}"
+pr_name = "chore: release{% if package and version %} {{ package }} v{{ version }}{% endif %}"
 features_always_increment_minor = false
 
 [changelog]
