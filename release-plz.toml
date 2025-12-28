@@ -5,6 +5,7 @@ git_tag_enable = true
 publish = false
 pr_labels = ["release", "skip-ci"]
 pr_name = "chore: release{% if package and version %} {{ package }} v{{ version }}{% endif %}"
+pr_body = "{{ changelog }}"
 features_always_increment_minor = false
 
 [changelog]
@@ -13,7 +14,7 @@ body = """
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | upper_first }}
 {% for commit in commits %}
-- {{ commit.message }}{% if commit.scope %} *({{ commit.scope }})*{% endif %} - @{{ commit.author.name }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/jtaw5649/barforge-app/commit/{{ commit.id }}))
+- {{ commit.message }}{% if commit.scope %} *({{ commit.scope }})*{% endif %}{% if commit.author.name and commit.author.name != "github-actions[bot]" and commit.author.name != "release-plz[bot]" %} - @{{ commit.author.name }}{% endif %} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/jtaw5649/barforge-app/commit/{{ commit.id }}))
 {%- endfor %}
 {% endfor %}
 """
